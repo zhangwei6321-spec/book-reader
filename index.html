@@ -366,15 +366,6 @@ async function loadChapters(bookId){
   }
   renderTocList();
 }
-  }else if(bookContentCache){
-    // 回退：实时检测并缓存
-    bookChapters=detectChapters(bookContentCache);
-    await dbPut('toc_cache',{bookId:bookId,chapters:bookChapters,updatedAt:Date.now()});
-  }else{
-    bookChapters=[];
-  }
-  renderTocList();
-}
 
 function raf(){return new Promise(function(r){requestAnimationFrame(r)})}
 
