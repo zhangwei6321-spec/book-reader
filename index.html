@@ -176,37 +176,56 @@ function fmtBytes(b){if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed
 //  章节检测 & 段落索引
 // ═══════════════════════════════════════════
 function detectChapters(content){
-  // 匹配中文网文章节标题模式
   var patterns=[
-    /第[一二三四五六七八九十百千0-9０-９]+[章回节卷集篇部]/g,
+    /第[一二三四五六七八九十百千零0-9０-９]+[章回节卷集篇部]/g,
+    /第\s*[0-9０-９]+\s*[章回节卷集篇部]/g,
     /[Cc]hapter\s*\d+/g,
     /[Vv]olume\s*\d+/g,
-    /第\d+[章回节卷集篇部]/g,
-    /[序言跋楔][子文]?/g,
-    /[终后]章/g,
-    /番外[篇一二三四五六七八九十\d]*/g,
-    /（[一二三四五六七八九十]+）/g,
-    /^\s*[一二三四五六七八九十]+[、，。\s]/gm
+    /^\s*[序言跋楔][子文]?\s*$/gm,
+    /^\s*[终后]章\s*$/gm,
+    /^\s*番外[篇一二三四五六七八九十\d]*/gm,
+    /（[一二三四五六七八九十]+）/g
   ];
   var chapters=[];
   for(var p=0;p<patterns.length;p++){
-    var re=patterns[p];
-    var m;
+    var re=patterns[p],m;
+    re.lastIndex=0;
     while((m=re.exec(content))!==null){
-      // 取标题的上下文（前几个字+标题本身+后几个字）
-      var start=Math.max(0,m.index-3);
-      var end=Math.min(content.length,m.index+m[0].length+15);
-      var ctx=content.substring(start,end).replace(/\n/g,' ').trim();
-      // 截取合理长度
-      if(ctx.length>30)ctx=ctx.substring(0,30)+'…';
+      var st=Math.max(0,m.index-5);
+      var en=Math.min(content.length,m.index+m[0].length+18);
+      var ctx=content.substring(st,en).replace(/\n/g,' ').replace(/\s+/g,' ').trim();
+      if(ctx.length>35)ctx=ctx.substring(0,35)+'…';
       chapters.push({title:m[0],context:ctx,pos:m.index});
     }
   }
-  // 去重（相近位置的重复匹配）
+  // 标题去重：相同文本+相近位置才去重
   chapters.sort(function(a,b){return a.pos-b.pos});
   var deduped=[];
   for(var i=0;i<chapters.length;i++){
-    if(i===0||chapters[i].pos-deduped[deduped.length-1].pos>20)deduped.push(chapters[i]);
+    var dup=false;
+    for(var j=0;j<deduped.length;j++){
+      if(deduped[j].title===chapters[i].title&&Math.abs(deduped[j].pos-chapters[i].pos)<10){dup=true;break}
+    }
+    if(!dup)deduped.push(chapters[i]);
+  }
+  // 如果没检测到章节，宽松匹配
+  if(deduped.length===0){
+    var lines=content.split('\n');
+    for(var li=0;li<lines.length;li++){
+      var line=lines[li].trim();
+      if(line.length>2&&line.length<60&&
+        (line.indexOf('章')!==-1||line.indexOf('回')!==-1||line.indexOf('节')!==-1||
+         line.indexOf('卷')!==-1||line.indexOf('篇')!==-1)){
+        var pos=content.indexOf(line);
+        if(pos>=0)deduped.push({title:line.substring(0,30),context:line,pos:pos});
+      }
+    }
+    deduped.sort(function(a,b){return a.pos-b.pos});
+    var d2=[];
+    for(var k=0;k<deduped.length;k++){
+      if(k===0||Math.abs(deduped[k].pos-d2[d2.length-1].pos)>15)d2.push(deduped[k])
+    }
+    deduped=d2;
   }
   return deduped;
 }
@@ -337,7 +356,23 @@ async function openBook(book){
 
 async function loadChapters(bookId){
   var toc=await dbGet('toc_cache',bookId);
-  bookChapters=(toc&&toc.chapters)?toc.chapters:[];
+  if(toc&&toc.chapters&&toc.chapters.length>0){
+    bookChapters=toc.chapters;
+  }else if(bookContentCache){
+    bookChapters=detectChapters(bookContentCache);
+    await dbPut('toc_cache',{bookId:bookId,chapters:bookChapters,updatedAt:Date.now()});
+  }else{
+    bookChapters=[];
+  }
+  renderTocList();
+}
+  }else if(bookContentCache){
+    // 回退：实时检测并缓存
+    bookChapters=detectChapters(bookContentCache);
+    await dbPut('toc_cache',{bookId:bookId,chapters:bookChapters,updatedAt:Date.now()});
+  }else{
+    bookChapters=[];
+  }
   renderTocList();
 }
 
