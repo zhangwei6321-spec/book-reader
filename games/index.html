@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>棋类游戏中心</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ===== 主菜单 ===== -->
+<div id="main-menu" class="screen active">
+  <div class="menu-container">
+    <h1 class="title">🎮 棋类游戏中心</h1>
+    <p class="subtitle">选择游戏，挑战最强AI</p>
+    <div class="game-cards" id="game-cards">
+      <!-- 动态生成 -->
+    </div>
+  </div>
+</div>
+
+<!-- ===== 游戏界面 ===== -->
+<div id="game-screen" class="screen">
+  <div class="game-header">
+    <button class="btn btn-back btn-sm" onclick="showMainMenu()">← 返回</button>
+    <div class="game-info">
+      <span id="game-title" class="game-title-text"></span>
+      <span id="game-difficulty" class="game-difficulty-text">难度 9 - 一代宗师</span>
+    </div>
+    <div class="game-status">
+      <span id="game-turn-indicator"></span>
+    </div>
+  </div>
+  <div class="game-body">
+    <div class="game-left-panel">
+      <div class="game-controls">
+        <select id="difficulty-select" class="select-difficulty">
+          <option value="1">难度 1 - 初学乍练</option>
+          <option value="2">难度 2 - 略知一二</option>
+          <option value="3">难度 3 - 初窥门径</option>
+          <option value="4">难度 4 - 小有所成</option>
+          <option value="5">难度 5 - 融会贯通</option>
+          <option value="6">难度 6 - 炉火纯青</option>
+          <option value="7">难度 7 - 出类拔萃</option>
+          <option value="8">难度 8 - 登峰造极</option>
+          <option value="9" selected>难度 9 - 一代宗师</option>
+        </select>
+        <button class="btn btn-primary" id="btn-new-game">新游戏</button>
+        <button class="btn btn-secondary" id="btn-undo">悔棋</button>
+      </div>
+      <div class="game-history" id="game-history">
+        <h3>走棋记录</h3>
+        <div id="move-list"></div>
+      </div>
+    </div>
+    <div class="game-board-container">
+      <canvas id="game-canvas"></canvas>
+      <div id="game-overlay" class="game-overlay hidden">
+        <div class="overlay-content">
+          <h2 id="overlay-message"></h2>
+          <button class="btn btn-primary" id="overlay-btn">再来一局</button>
+        </div>
+      </div>
+    </div>
+    <div class="game-right-panel">
+      <div class="captured-pieces" id="captured-red">
+        <h4>红方被吃</h4>
+        <div id="captured-red-list"></div>
+      </div>
+      <div class="captured-pieces" id="captured-black">
+        <h4>黑方被吃</h4>
+        <div id="captured-black-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/game-registry.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/games/base.js"></script>
+<script src="js/games/chess.js"></script>
+<script src="js/games/gomoku.js"></script>
+<script src="js/games/military.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
