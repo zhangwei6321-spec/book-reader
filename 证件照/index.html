@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>证件照处理工具</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script type="module">
+    import { removeBackground } from 'https://esm.sh/@imgly/background-removal@1.7.0';
+    window._removeBg = removeBackground;
+    console.log('✅ AI engine ready');
+  </script>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>📸 证件照处理</h1>
+      <p>纯浏览器端 · AI抠图 · 换底色</p>
+    </header>
+
+    <div class="upload-row">
+      <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">📁 选择照片</button>
+      <button class="btn btn-outline" onclick="document.getElementById('cameraInput').click()">📷 拍照</button>
+      <input type="file" id="fileInput" accept="image/*" onchange="handleFile(this.files[0])">
+      <input type="file" id="cameraInput" accept="image/*" capture="environment" onchange="handleFile(this.files[0])">
+    </div>
+
+    <div class="canvas-section">
+      <div class="canvas-wrapper" id="canvasWrapper">
+        <div class="canvas-placeholder" id="placeholder">
+          <div class="icon">👤</div>
+          <div class="text">选择照片、拍照或拖拽图片到此处</div>
+        </div>
+        <canvas id="previewCanvas"></canvas>
+        <canvas id="overlayCanvas"></canvas>
+        <div class="loading-overlay" id="loadingOverlay" style="display:none">
+          <div class="loading-spinner"></div>
+          <div class="loading-text" id="loadingText">AI抠图中...</div>
+          <div class="loading-sub" id="loadingSub"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-bar">
+      <span>尺寸: <span class="dim" id="sizeLabel">25×35mm</span></span>
+      <span>像素: <span class="dim" id="pixelLabel">—</span></span>
+      <span>状态: <span class="dim" id="statusLabel" style="color:#10b981">就绪</span></span>
+    </div>
+
+    <div class="controls" id="controls" style="display:none">
+      <div class="control-group">
+        <label>🎨 背景色</label>
+        <div class="color-presets">
+          <div class="color-dot white active" data-color="#ffffff" onclick="setBgColor('#ffffff',this)"></div>
+          <div class="color-dot blue" data-color="#438edb" onclick="setBgColor('#438edb',this)"></div>
+          <div class="color-dot red" data-color="#d43030" onclick="setBgColor('#d43030',this)"></div>
+          <div class="color-dot lightblue" data-color="#69b4ff" onclick="setBgColor('#69b4ff',this)"></div>
+          <div class="color-dot gray" data-color="#c0c0c0" onclick="setBgColor('#c0c0c0',this)"></div>
+          <input type="color" id="customColor" value="#ffffff" onchange="setBgColor(this.value,null)">
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label>📐 照片规格</label>
+        <div class="size-presets">
+          <button class="size-chip active" data-size="25x35" onclick="setSize('25x35',this)">一寸</button>
+          <button class="size-chip" data-size="35x49" onclick="setSize('35x49',this)">二寸</button>
+          <button class="size-chip" data-size="35x45" onclick="setSize('35x45',this)">小二寸</button>
+          <button class="size-chip" data-size="33x48" onclick="setSize('33x48',this)">大一寸</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label>✨ 画面调整</label>
+        <div class="adjust-row">
+          <div class="adjust-item"><label>亮度</label><input type="range" id="brightness" min="-50" max="50" value="0" oninput="debounceRender()"></div>
+          <div class="adjust-item"><label>对比度</label><input type="range" id="contrast" min="-50" max="50" value="0" oninput="debounceRender()"></div>
+          <div class="adjust-item"><label>饱和度</label><input type="range" id="saturation" min="-50" max="50" value="0" oninput="debounceRender()"></div>
+        </div>
+      </div>
+
+      <button class="btn btn-preview btn-full" onclick="showPreview()">👁️ 预览效果</button>
+      <button class="btn btn-success btn-full" onclick="downloadPhoto()">💾 下载证件照</button>
+      <button class="btn btn-outline btn-full btn-sm" onclick="downloadPrintLayout()">🖨️ 下载排版照 (4×6)</button>
+      <button class="btn btn-ghost btn-full btn-sm" onclick="forceRefresh()">🔄 强制刷新</button>
+      <button class="btn btn-danger btn-full btn-sm" onclick="resetAll()">🗑️ 重新开始</button>
+    </div>
+
+    <div class="exam-section">
+      <h3>📋 考试证件照快速设置</h3>
+      <input class="exam-search" id="examSearch" type="text" placeholder="搜索考试名称..." oninput="filterExams()">
+      <div class="category-tabs">
+        <button class="cat-tab active" data-cat="all" onclick="filterByCategory('all',this)">全部</button>
+        <button class="cat-tab" data-cat="公务员" onclick="filterByCategory('公务员',this)">公务员</button>
+        <button class="cat-tab" data-cat="教育" onclick="filterByCategory('教育',this)">教育</button>
+        <button class="cat-tab" data-cat="资格证" onclick="filterByCategory('资格证',this)">资格证</button>
+        <button class="cat-tab" data-cat="出国" onclick="filterByCategory('出国',this)">出国</button>
+        <button class="cat-tab" data-cat="驾驶" onclick="filterByCategory('驾驶',this)">驾驶</button>
+        <button class="cat-tab" data-cat="其他" onclick="filterByCategory('其他',this)">其他</button>
+      </div>
+      <div class="exam-list" id="examList"></div>
+    </div>
+
+    <div class="tips">
+      <strong>💡 纯浏览器版：</strong>AI模型首次加载约40MB，后续缓存秒开。所有处理在本地完成，不上传服务器。
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="previewModal" onclick="if(event.target===this)closePreview()">
+    <div class="modal-content">
+      <h3 id="previewTitle">证件照预览</h3>
+      <img class="modal-preview-img" id="previewImg" src="" alt="预览">
+      <div class="modal-actions">
+        <button class="btn btn-ghost btn-sm" onclick="closePreview()">✕ 关闭</button>
+        <button class="btn btn-primary btn-sm" onclick="closePreview();downloadPhoto()">💾 下载</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="js/exams.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
