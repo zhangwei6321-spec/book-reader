@@ -1,37 +1,48 @@
-# 📚 Book Reader & Games
+# 📸 证件照处理工具
 
-两个纯前端项目的合集，均可在 GitHub Pages 直接访问。
+纯浏览器端 AI 证件照处理，上传即抠图，一键换底色。
 
----
+## 🔗 在线体验
 
-## 🎮 [棋类游戏中心](./games/)
+- **GitHub Pages**: https://zhangwei6321-spec.github.io/book-reader/证件照/
+- 或克隆后本地打开 `证件照/index.html`
 
-> 人与规则对战，9 级难度，顶级策略
+## ✨ 功能
 
-- **♚ 象棋** — 楚河汉界，十大规则评分引擎
-- **⚫ 五子棋** — 15×15 棋盘，五连即胜，9 级规则 AI
-- **🎖️ 军棋（翻翻棋）** — 红黑混杂暗棋，翻牌对战，军衔比拼
+- 🤖 **AI 智能抠图** — 浏览器本地运行，隐私安全
+- 🎨 **一键换底色** — 白/蓝/红/自定义
+- 📐 **50+ 考试规格** — 国考、省考、教资、法考、护照签证等
+- 👁️ **实时预览** — 拖拽平移、滚轮缩放
+- 💾 **导出** — 单张证件照 / 4×6 排版照
+- 📱 **移动端适配** — 拍照上传、拖拽上传
 
-🔗 [在线体验](https://zhangwei6321-spec.github.io/book-reader/games/)
+## 🚀 技术栈
 
----
+- 前端：HTML5 Canvas + vanilla JS
+- AI 抠图：[`@imgly/background-removal`](https://www.npmjs.com/package/@imgly/background-removal)（浏览器端 WebAssembly）
+- 模型：首次下载 ~40MB，后续浏览器缓存秒开
 
-## 📖 [仿真书本翻页阅读器](./txt仿真阅读/)
+## 📂 项目结构
 
-> 上传 TXT 小说，享受真实翻页体验
+```
+证件照/
+├── index.html        # 页面
+├── css/style.css     # 样式
+└── js/
+    ├── exams.js      # 考试规格数据库
+    └── main.js       # 核心逻辑
+```
 
-- 📤 上传 TXT 文件，自动解析章节目录
-- 📖 仿真书本左右翻页动画
-- 📑 侧边栏章节目录导航
-- 📚 书架管理，本地存储阅读进度
+## 📦 本地运行
 
-🔗 [在线体验](https://zhangwei6321-spec.github.io/book-reader/txt仿真阅读/)
+```bash
+cd 证件照
+python3 -m http.server 3000
+# 浏览器打开 http://localhost:3000
+```
 
----
+## 🔗 其他项目
 
-## 🛠 技术栈
-
-- 纯 HTML / CSS / JavaScript，零框架依赖
-- Canvas 渲染游戏棋盘
-- localStorage 存储进度与设置
-- GitHub Pages 静态托管
+- **媒体解析工具** — 小红书/抖音链接解析
+- **题库工具** — 前端题库系统
+- **视频解析** — Node.js 视频处理
