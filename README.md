@@ -1,52 +1,42 @@
-# 📚 Book Reader & Games
+# ⚡ 效率工具集
 
-纯前端项目合集，均可在 GitHub Pages 直接访问。
+纯静态效率工具，无需服务器，打开即用。所有数据存储在浏览器本地。
 
----
+## 🛠 工具列表
 
-## 📸 [证件照处理工具](./证件照/)
+### ✅ [习惯打卡](https://zhangwei6321-spec.github.io/book-reader/apps/habit-tracker/)
 
-> AI 智能抠图，一键换底色
+习惯养成追踪工具，支持每日打卡、自定义完成档次、每周休息日、日历热力图、笔记和 PDF 导出。
 
-- 🤖 浏览器端 AI 抠图，隐私安全
-- 🎨 白/蓝/红/自定义底色
-- 📐 50+ 考试规格一键匹配
-- 💾 单张导出 + 4×6 排版打印
-- 📱 拍照上传、拖拽上传
+- 📌 今日打卡 — 一键标记所有习惯
+- 📋 习惯管理 — 每个习惯独立配置完成档次（如：未完成 / 部分完成 / 已完成 / 超额完成）
+- 📊 统计 — 月度日历热力图，点击日期查看当天详情
+- 📝 笔记 — 按习惯和日期筛选
+- 🔔 每日提醒 — 桌面通知
+- 📤 导出 — 打卡记录 + 笔记导出为 PDF
 
-🔗 [在线体验](https://zhangwei6321-spec.github.io/book-reader/证件照/)
+### ⏱️ [专注计时器](https://zhangwei6321-spec.github.io/book-reader/apps/timer-app/)
 
----
+任务计时工具，自定义总时长与每日目标，进度可视化。
 
-## 🎮 [棋类游戏中心](./games/)
+- ⏱ 计时器 — 选择任务后开始/暂停计时，今日进度条
+- 📋 任务管理 — 总时长、每日时长配置
+- 📝 快捷笔记 — 计时过程中随时记录
+- 🔔 每日提醒 — 桌面通知
+- 📤 PDF 导出 — 计时记录 + 笔记
 
-> 人与 AI 对战，9 级难度
+## 🔗 在线访问
 
-- **♚ 象棋** — 楚河汉界，十大规则评分引擎
-- **⚫ 五子棋** — 15×15 棋盘，五连即胜
-- **🎖️ 军棋（翻翻棋）** — 翻牌对战，军衔比拼
+| 工具 | 链接 |
+|------|------|
+| 主页 | [book-reader](https://zhangwei6321-spec.github.io/book-reader/) |
+| 习惯打卡 | [habit-tracker](https://zhangwei6321-spec.github.io/book-reader/apps/habit-tracker/) |
+| 专注计时器 | [timer-app](https://zhangwei6321-spec.github.io/book-reader/apps/timer-app/) |
 
-🔗 [在线体验](https://zhangwei6321-spec.github.io/book-reader/games/)
+## 📦 技术栈
 
----
-
-## 📖 [仿真书本翻页阅读器](./txt仿真阅读/)
-
-> 上传 TXT 小说，享受真实翻页体验
-
-- 📤 上传 TXT 文件，自动解析章节目录
-- 📖 仿真书本左右翻页动画
-- 📑 侧边栏章节目录导航
-- 📚 书架管理，本地存储阅读进度
-
-🔗 [在线体验](https://zhangwei6321-spec.github.io/book-reader/txt仿真阅读/)
-
----
-
-## 🛠 技术栈
-
-- 纯 HTML / CSS / JavaScript，零框架依赖
-- Canvas 渲染游戏棋盘 + 图像处理
-- AI 抠图：浏览器端 WebAssembly（`@imgly/background-removal`）
-- localStorage 存储进度与设置
-- GitHub Pages 静态托管
+- 纯 HTML/CSS/JS，无框架
+- localStorage 本地存储
+- jsPDF 导出 PDF
+- Notification API 桌面提醒
+- GitHub Pages 部署
