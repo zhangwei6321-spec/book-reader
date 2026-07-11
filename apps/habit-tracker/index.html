@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Habit Tracker — 习惯打卡</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0b0e14; --surface: #141820; --surface2: #1c202c; --border: #282d3a;
+    --text: #e1e6f0; --text2: #7b8196; --accent: #5b9cf5; --accent2: #a78bfa;
+    --green: #34d399; --yellow: #fbbf24; --red: #f87171; --orange: #fb923c;
+    --radius: 12px; --radius-sm: 8px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden;
+  }
+  nav {
+    width: 200px; background: var(--surface); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; padding: 20px 0; flex-shrink: 0;
+  }
+  nav .logo { font-size: 16px; font-weight: 700; padding: 0 18px 20px; color: var(--accent); display: flex; align-items: center; gap: 8px; }
+  nav .nav-item { padding: 9px 18px; cursor: pointer; color: var(--text2); font-size: 13px; border-left: 3px solid transparent; transition: all 0.15s; display: flex; align-items: center; gap: 8px; }
+  nav .nav-item:hover { color: var(--text); }
+  nav .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(91,156,245,0.06); }
+  nav .spacer { flex: 1; }
+  main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .page { display: none; flex: 1; flex-direction: column; padding: 24px 28px; overflow-y: auto; }
+  .page.active { display: flex; }
+  .page h2 { font-size: 20px; font-weight: 700; margin-bottom: 16px; }
+  .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 14px; }
+  .card h3 { font-size: 14px; font-weight: 600; margin-bottom: 10px; }
+  .btn { padding: 7px 16px; border: none; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #4a8de8; }
+  .btn-danger { background: transparent; color: var(--red); border: 1px solid var(--red); }
+  .btn-danger:hover { background: rgba(248,113,113,0.1); }
+  .btn-sm { padding: 4px 10px; font-size: 11px; }
+  .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--text2); }
+  .btn-xs { padding: 2px 8px; font-size: 10px; border-radius: 5px; }
+  input, textarea, select {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    color: var(--text); padding: 9px 12px; font-size: 13px; width: 100%; font-family: inherit; outline: none; transition: border 0.15s;
+  }
+  input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 70px; }
+  label { display: block; font-size: 11px; color: var(--text2); margin-bottom: 4px; font-weight: 500; }
+  .form-row { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+  .form-row > div { flex: 1; min-width: 120px; }
+  .checkin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+  .checkin-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; transition: border-color 0.15s; }
+  .checkin-card.rest-day { opacity: 0.5; border-style: dashed; }
+  .checkin-card.done { border-color: var(--green); }
+  .checkin-card .habit-name { font-weight: 600; font-size: 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+  .checkin-card .level-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .level-btn { flex: 1; min-width: 50px; padding: 8px 4px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface2); color: var(--text2); cursor: pointer; font-size: 12px; text-align: center; transition: all 0.15s; }
+  .level-btn:hover { border-color: var(--accent); color: var(--text); }
+  .level-btn.active { border-color: var(--accent); background: rgba(91,156,245,0.12); color: var(--accent); font-weight: 600; }
+  .level-btn.tier0.active { border-color: var(--red); background: rgba(248,113,113,0.12); color: var(--red); }
+  .level-btn.tier1.active { border-color: var(--orange); background: rgba(251,146,60,0.12); color: var(--orange); }
+  .level-btn.tier2.active { border-color: var(--yellow); background: rgba(251,191,36,0.12); color: var(--yellow); }
+  .level-btn.tier3.active { border-color: var(--green); background: rgba(52,211,153,0.12); color: var(--green); }
+  /* Level editor tags */
+  .level-tag {
+    display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px;
+    border-radius: 20px; font-size: 11px; margin: 2px;
+  }
+  .pill { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 10px; font-weight: 600; }
+  .pill-cat { background: rgba(167,139,250,0.15); color: var(--accent2); }
+  .pill-rest { background: rgba(251,191,36,0.12); color: var(--yellow); }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; max-width: 500px; text-align: center; }
+  .cal-wd { font-size: 10px; color: var(--text2); padding: 4px 0; font-weight: 600; }
+  .cal-cell { aspect-ratio: 1; border-radius: 4px; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 11px; cursor: pointer; transition: all 0.15s; position: relative; min-width: 28px; }
+  .cal-cell.placeholder { background: transparent; cursor: default; }
+  .cal-cell:hover { transform: scale(1.15); z-index: 2; }
+  
+  
+  .cal-cell.tier0 { background: rgba(248,113,113,0.25); color: var(--red); }
+  .cal-cell.tier1 { background: rgba(251,146,60,0.3); color: var(--orange); }
+  .cal-cell.tier2 { background: rgba(251,191,36,0.35); color: var(--yellow); }
+  .cal-cell.tier3 { background: rgba(52,211,153,0.3); color: var(--green); }
+  .cal-cell.no-checkin { background: var(--surface2); color: var(--text2); }
+  .cal-cell.rest { background: rgba(251,191,36,0.08); color: var(--text2); border: 1px dashed rgba(251,191,36,0.2); }
+  .cal-cell.today { box-shadow: 0 0 0 2px var(--accent); font-weight: 700; }
+  .cal-cell.selected { box-shadow: 0 0 0 2px var(--accent2); }
+  .weekday-picker { display: flex; gap: 4px; }
+  .wd-btn { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface2); color: var(--text2); cursor: pointer; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .wd-btn:hover { border-color: var(--accent); }
+  .wd-btn.rest { border-color: var(--yellow); background: rgba(251,191,36,0.15); color: var(--yellow); }
+  .note-item { background: var(--surface2); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 8px; border-left: 3px solid var(--accent); }
+  .note-item .note-meta { font-size: 10px; color: var(--text2); margin-bottom: 5px; display: flex; gap: 10px; }
+  .note-item .note-body { font-size: 13px; white-space: pre-wrap; line-height: 1.5; }
+  .stat-row { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 16px; }
+  .stat-card { flex: 1; min-width: 140px; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); text-align: center; }
+  .stat-card .stat-num { font-size: 28px; font-weight: 700; }
+  .stat-card .stat-label { font-size: 11px; color: var(--text2); margin-top: 4px; }
+  .reminder-row { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--surface2); border-radius: var(--radius-sm); margin-bottom: 6px; }
+  .reminder-row input[type="time"] { width: auto; }
+  .toggle { position: relative; display: inline-block; width: 36px; height: 20px; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle .slider { position: absolute; cursor: pointer; inset:0; background: var(--border); border-radius: 20px; transition: 0.2s; }
+  .toggle .slider:before { content:''; position: absolute; height: 14px; width: 14px; left: 3px; bottom: 3px; background: var(--text); border-radius: 50%; transition: 0.2s; }
+  .toggle input:checked + .slider { background: var(--accent); }
+  .toggle input:checked + .slider:before { transform: translateX(16px); }
+  .modal-overlay { position: fixed; inset:0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 100; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; width: 460px; max-width: 92vw; max-height: 80vh; overflow-y: auto; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+  .toast { position: fixed; bottom: 20px; right: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 7px; padding: 10px 18px; font-size: 12px; z-index: 200; animation: slideUp 0.3s ease; box-shadow: 0 6px 24px rgba(0,0,0,0.5); }
+  @keyframes slideUp { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
+  .empty { text-align: center; padding: 30px 16px; color: var(--text2); font-size: 13px; }
+  .export-table { width:100%; border-collapse: collapse; font-size:12px; margin-top:10px; }
+  .export-table th, .export-table td { padding: 6px 10px; text-align: left; border-bottom:1px solid var(--border); }
+  .export-table th { color: var(--text2); font-weight: 600; font-size: 10px; text-transform: uppercase; }
+  /* Level editor inside habit card */
+  .levels-inline { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
+  .levels-inline input { width: 60px; padding: 2px 6px; font-size: 10px; }
+  .level-inline-tag { display: inline-flex; align-items: center; gap: 2px; padding: 2px 8px; border-radius: 10px; font-size: 10px; border: 1px solid; white-space: nowrap; }
+  @media (max-width: 700px) {
+    nav { width: 48px; }
+    nav .nav-item { padding: 10px 6px; font-size: 0; justify-content: center; gap:0; }
+    nav .nav-item::first-letter { font-size: 15px; }
+    .page { padding: 16px 12px; }
+    .checkin-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">✅ 习惯打卡</div>
+  <div class="nav-item active" data-page="today">📌 今日打卡</div>
+  <div class="nav-item" data-page="habits">📋 习惯管理</div>
+  <div class="nav-item" data-page="stats">📊 统计</div>
+  <div class="nav-item" data-page="notes">📝 笔记</div>
+  <div class="nav-item" data-page="reminders">🔔 提醒</div>
+  <div class="nav-item" data-page="export">📤 导出</div>
+  <div class="spacer"></div>
+  <div class="nav-item" data-page="settings">⚙ 设置</div>
+</nav>
+
+<main>
+
+  <!-- TODAY -->
+  <div class="page active" id="page-today">
+    <div class="page-header">
+      <h2 id="today-date">今日打卡</h2>
+      <button class="btn btn-primary btn-sm" onclick="checkAllDone()">✅ 全部标为最高档</button>
+    </div>
+    <div class="checkin-grid" id="checkin-grid"></div>
+    <div id="today-empty" class="empty" style="display:none">还没有习惯，去「习惯管理」创建一个吧</div>
+  </div>
+
+  <!-- HABITS -->
+  <div class="page" id="page-habits">
+    <h2>习惯管理</h2>
+    <div class="card">
+      <h3>新建习惯</h3>
+      <div class="form-row">
+        <div><label>习惯名称</label><input id="habit-name" placeholder="例如：每天阅读30分钟"></div>
+        <div><label>分类</label><select id="habit-category"><option value="">无分类</option></select></div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label>休息日（每周）</label>
+          <div class="weekday-picker" id="habit-rest-days"></div>
+        </div>
+        <div>
+          <label>关联笔记模板</label>
+          <input id="habit-note-template" placeholder="打卡时可选的笔记提示">
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="addHabit()">+ 添加习惯</button>
+    </div>
+
+    <div class="card">
+      <h3>分类管理</h3>
+      <div class="form-row">
+        <div><label>分类名称</label><input id="cat-name" placeholder="例如：健康 / 学习 / 工作"></div>
+        <div><label>颜色标记</label><input type="color" id="cat-color" value="#a78bfa" style="width:60px;height:36px;padding:2px"></div>
+        <div style="flex:0 0 auto;display:flex;align-items:flex-end"><button class="btn btn-ghost" onclick="addCategory()">+ 添加</button></div>
+      </div>
+      <div id="cats-list" style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"></div>
+    </div>
+
+    <div id="habits-list"></div>
+  </div>
+
+  <!-- STATS -->
+  <div class="page" id="page-stats">
+    <h2>统计</h2>
+    <div class="form-row">
+      <div style="flex:0 0 auto;min-width:180px"><label>选择习惯</label><select id="stats-habit" onchange="renderStats()"><option value="">全部习惯</option></select></div>
+      <div style="flex:0 0 auto;min-width:140px"><label>月份</label><input type="month" id="stats-month" onchange="renderStats()"></div>
+    </div>
+    <div class="stat-row" id="stats-cards"></div>
+    <div class="card"><h3>打卡日历</h3><div id="stats-calendar" style="overflow-x:auto"></div><div id="cal-detail" class="card" style="display:none;margin-top:12px;background:var(--surface2)"></div></div>
+  </div>
+
+  <!-- NOTES -->
+  <div class="page" id="page-notes">
+    <h2>笔记</h2>
+    <div class="form-row">
+      <div style="flex:0 0 auto;min-width:160px"><label>按习惯筛选</label><select id="notes-filter" onchange="renderNotes()"><option value="">全部习惯</option></select></div>
+      <div style="flex:0 0 auto;min-width:140px"><label>日期</label><input type="date" id="notes-date" onchange="renderNotes()"></div>
+    </div>
+    <div class="card">
+      <textarea id="note-content" placeholder="记录你的想法…"></textarea>
+      <div class="form-row" style="margin-top:8px;margin-bottom:0">
+        <div><label>关联习惯 (可选)</label><select id="note-habit"><option value="">无关联</option></select></div>
+        <div style="flex:0 0 auto;display:flex;align-items:flex-end"><button class="btn btn-primary" onclick="addNote()">保存笔记</button></div>
+      </div>
+    </div>
+    <div id="notes-list"></div>
+  </div>
+
+  <!-- REMINDERS -->
+  <div class="page" id="page-reminders">
+    <h2>每日提醒</h2>
+    <div class="card">
+      <h3>添加提醒</h3>
+      <div class="form-row">
+        <div style="flex:0 0 auto"><label>时间</label><input type="time" id="reminder-time" value="08:00"></div>
+        <div><label>提醒文字</label><input id="reminder-text" placeholder="记得打卡哦！"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="reminder-notif" checked> 桌面通知</label>
+        <button class="btn btn-primary btn-sm" onclick="addReminder()">+ 添加提醒</button>
+      </div>
+    </div>
+    <div id="reminders-list" style="margin-top:12px"></div>
+    <div class="card" style="margin-top:14px"><div style="font-size:12px;color:var(--text2);line-height:1.6">⚠ 提醒仅在页面保持打开时生效。首次使用请允许桌面通知权限。</div></div>
+  </div>
+
+  <!-- EXPORT -->
+  <div class="page" id="page-export">
+    <h2>导出报告</h2>
+    <div class="card">
+      <h3>导出选项</h3>
+      <div class="form-row">
+        <div><label>习惯</label><select id="export-habit"><option value="">全部习惯</option></select></div>
+        <div style="flex:0 0 auto;min-width:140px"><label>起始日期</label><input type="date" id="export-start"></div>
+        <div style="flex:0 0 auto;min-width:140px"><label>结束日期</label><input type="date" id="export-end"></div>
+        <div style="flex:0 0 auto;display:flex;align-items:flex-end"><button class="btn btn-primary" onclick="exportPDF()">📄 导出 PDF</button></div>
+      </div>
+    </div>
+    <div class="card"><h3>预览</h3><div id="export-preview" style="overflow-x:auto"></div></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="page" id="page-settings">
+    <h2>设置</h2>
+    <div class="card">
+      <h3>数据管理</h3>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-ghost" onclick="exportData()">📥 导出全部数据 (JSON)</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('import-file').click()">📤 导入数据 (JSON)</button>
+        <button class="btn btn-danger" onclick="clearAllData()">🗑 清除所有数据</button>
+      </div>
+      <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+    </div>
+    <div class="card"><h3>关于</h3><p style="font-size:12px;color:var(--text2);line-height:1.6">Habit Tracker — 纯静态习惯打卡工具。所有数据存储在浏览器 localStorage，不会上传到任何服务器。</p></div>
+  </div>
+
+</main>
+
+<div id="toast-container"></div>
+
+<script>
+// ==================== DATA STORE ====================
+const STORE_KEY = 'habit_tracker_v2';
+
+function defaultStore() {
+  return { categories: [], habits: [], checkins: [], notes: [], reminders: [], nextId: 1 };
+}
+
+function loadStore() {
+  const raw = localStorage.getItem(STORE_KEY);
+  if (raw) { try { const d = JSON.parse(raw); migrateIfNeeded(d); return d; } catch(e) {} }
+  return defaultStore();
+}
+
+function saveStore() { localStorage.setItem(STORE_KEY, JSON.stringify(store)); }
+function genId() { return store.nextId++; }
+
+let store = loadStore();
+let todayStr = getTodayStr();
+function getTodayStr() { return new Date().toISOString().slice(0,10); }
+function fmtDate(d) { return new Date(d).toLocaleDateString('zh-CN',{weekday:'long',year:'numeric',month:'long',day:'numeric'}); }
+
+// Migration: ensure every habit has its own levels
+function migrateIfNeeded(data) {
+  // v1 -> v2: move global levels into each habit
+  if (data.levels && Array.isArray(data.levels) && data.levels.length) {
+    data.habits.forEach(h => {
+      if (!h.levels || !h.levels.length) {
+        h.levels = JSON.parse(JSON.stringify(data.levels));
+      }
+    });
+    delete data.levels;
+  }
+  // ensure all habits have levels
+  data.habits.forEach(h => {
+    if (!h.levels || !h.levels.length) {
+      h.levels = [{id:1,name:'未完成',emoji:'✕',value:0},{id:2,name:'已完成',emoji:'✓',value:1}];
+    }
+  });
+}
+
+// ==================== NAV ====================
+function switchPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const page = document.getElementById('page-'+name);
+  const nav = document.querySelector('[data-page="'+name+'"]');
+  if (page) page.classList.add('active');
+  if (nav) nav.classList.add('active');
+  if (name==='today') renderToday();
+  if (name==='habits') { renderCategories(); renderHabits(); }
+  if (name==='stats') renderStats();
+  if (name==='notes') { if(!document.getElementById('notes-date').value) document.getElementById('notes-date').value=getTodayStr(); renderNotes(); }
+  if (name==='reminders') renderReminders();
+  if (name==='export') renderExportPreview();
+}
+document.querySelectorAll('.nav-item').forEach(i => i.addEventListener('click',()=>switchPage(i.dataset.page)));
+
+// ==================== TOAST ====================
+function toast(msg) { const e=document.createElement('div'); e.className='toast'; e.textContent=msg; document.getElementById('toast-container').appendChild(e); setTimeout(()=>e.remove(),2500); }
+function escHtml(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+// ==================== LEVEL HELPERS ====================
+function newDefaultLevels() {
+  let id = genId();
+  return [
+    { id: id++, name: '未完成', emoji: '✕', value: 0 },
+    { id: id++, name: '部分完成', emoji: '△', value: 1 },
+    { id: id++, name: '已完成', emoji: '✓', value: 2 },
+    { id: id++, name: '超额完成', emoji: '★', value: 3 },
+  ];
+}
+
+function getLevelById(habit, levelId) {
+  return (habit.levels||[]).find(l => l.id === levelId);
+}
+
+const LEVEL_COLORS = ['var(--red)','var(--orange)','var(--yellow)','var(--green)','var(--accent)','var(--accent2)'];
+const TIER_CLASSES = ['tier0','tier1','tier2','tier3'];
+
+// ==================== CATEGORIES ====================
+function addCategory() {
+  const n=document.getElementById('cat-name').value.trim(), c=document.getElementById('cat-color').value;
+  if(!n) return toast('请输入分类名称');
+  store.categories.push({id:genId(),name:n,color:c});
+  saveStore(); document.getElementById('cat-name').value='';
+  renderCategories(); refreshSelects(); toast('分类已添加');
+}
+function deleteCategory(id) {
+  if(!confirm('删除分类后关联习惯将变为无分类，确定？')) return;
+  store.habits.forEach(h=>{if(h.categoryId===id)h.categoryId=null;});
+  store.categories=store.categories.filter(c=>c.id!==id);
+  saveStore(); renderCategories(); refreshSelects(); renderHabits();
+}
+function renderCategories() {
+  const l=document.getElementById('cats-list');
+  if(!store.categories.length){l.innerHTML='<span style="font-size:12px;color:var(--text2)">暂无分类</span>';return;}
+  l.innerHTML=store.categories.map(c=>`<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:rgba(167,139,250,0.1);border-radius:20px;font-size:11px"><span style="width:8px;height:8px;border-radius:50%;background:${c.color}"></span>${escHtml(c.name)}<span style="cursor:pointer;margin-left:4px;opacity:0.5" onclick="deleteCategory(${c.id})">✕</span></span>`).join('');
+}
+
+// ==================== WEEKDAY PICKER ====================
+const WD_NAMES=['日','一','二','三','四','五','六'];
+function initWeekdayPicker(){
+  document.getElementById('habit-rest-days').innerHTML=WD_NAMES.map((n,i)=>`<div class="wd-btn" data-dow="${i}" onclick="this.classList.toggle('rest')">${n}</div>`).join('');
+}
+function getRestDays(){return[...document.querySelectorAll('#habit-rest-days .wd-btn.rest')].map(b=>parseInt(b.dataset.dow));}
+function setRestDays(days){document.querySelectorAll('#habit-rest-days .wd-btn').forEach(b=>b.classList.toggle('rest',days.includes(parseInt(b.dataset.dow))));}
+
+// ==================== HABITS ====================
+function addHabit(){
+  const name=document.getElementById('habit-name').value.trim();
+  const categoryId=document.getElementById('habit-category').value?parseInt(document.getElementById('habit-category').value):null;
+  const restDays=getRestDays();
+  const noteTemplate=document.getElementById('habit-note-template').value.trim();
+  if(!name) return toast('请输入习惯名称');
+  store.habits.push({id:genId(),name,categoryId,restDays,noteTemplate,enabled:true,levels:newDefaultLevels(),createdAt:new Date().toISOString()});
+  saveStore();
+  document.getElementById('habit-name').value=''; document.getElementById('habit-note-template').value=''; setRestDays([]);
+  renderHabits(); renderToday(); refreshSelects(); toast('习惯已添加');
+}
+function toggleHabit(id){const h=store.habits.find(h=>h.id===id);if(h){h.enabled=!h.enabled;saveStore();renderHabits();renderToday();}}
+function deleteHabit(id){
+  if(!confirm('确定删除此习惯及其所有打卡记录？')) return;
+  store.habits=store.habits.filter(h=>h.id!==id);
+  store.checkins=store.checkins.filter(c=>c.habitId!==id);
+  store.notes=store.notes.filter(n=>n.habitId!==id);
+  saveStore(); renderHabits(); renderToday(); refreshSelects(); toast('习惯已删除');
+}
+
+// Per-habit level CRUD
+function addLevelToHabit(habitId){
+  const habit=store.habits.find(h=>h.id===habitId); if(!habit) return;
+  const name=prompt('档次名称','自定义');
+  if(!name) return;
+  const emoji=prompt('图标 (emoji)','🔹')||'';
+  habit.levels.push({id:genId(),name,emoji,value:habit.levels.length});
+  saveStore(); renderHabits(); renderToday(); toast('档次已添加');
+}
+function removeLevelFromHabit(habitId,levelId){
+  const habit=store.habits.find(h=>h.id===habitId); if(!habit) return;
+  if(habit.levels.length<=1) return toast('至少保留一个档次');
+  habit.levels=habit.levels.filter(l=>l.id!==levelId);
+  // re-index values
+  habit.levels.forEach((l,i)=>l.value=i);
+  saveStore(); renderHabits(); renderToday();
+}
+
+function renderHabits(){
+  const list=document.getElementById('habits-list');
+  if(!store.habits.length){list.innerHTML='<div class="empty">还没有习惯，在上方创建一个吧</div>';return;}
+  list.innerHTML=store.habits.map(h=>{
+    const cat=h.categoryId?store.categories.find(c=>c.id===h.categoryId):null;
+    const restStr=h.restDays.length?h.restDays.map(d=>WD_NAMES[d]).join(' '):'无休息日';
+
+    const levelTags=(h.levels||[]).map((l,i)=>{
+      const color=LEVEL_COLORS[i]||'var(--accent)';
+      return `<span class="level-inline-tag" style="background:${color}22;border-color:${color}44;color:${color}">
+        ${l.emoji} ${escHtml(l.name)}
+        <span style="cursor:pointer;margin-left:2px;opacity:0.5;font-size:9px" onclick="removeLevelFromHabit(${h.id},${l.id})">✕</span>
+      </span>`;
+    }).join('');
+
+    return `<div class="card" style="${h.enabled?'':'opacity:0.5'}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
+        <div>
+          <strong>${escHtml(h.name)}</strong>
+          ${cat?`<span class="pill pill-cat" style="margin-left:6px">${escHtml(cat.name)}</span>`:''}
+          ${h.restDays.length?`<span class="pill pill-rest" style="margin-left:4px">休: ${restStr}</span>`:''}
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span style="font-size:11px;color:var(--text2)">${h.enabled?'启用':'停用'}</span>
+          <button class="btn btn-ghost btn-xs" onclick="toggleHabit(${h.id})">${h.enabled?'停用':'启用'}</button>
+          <button class="btn btn-ghost btn-xs" style="color:var(--red)" onclick="deleteHabit(${h.id})">删除</button>
+        </div>
+      </div>
+      <div style="margin-top:10px">
+        <div style="font-size:10px;color:var(--text2);margin-bottom:4px">完成档次：</div>
+        <div class="levels-inline">
+          ${levelTags}
+          <button class="btn btn-ghost btn-xs" onclick="addLevelToHabit(${h.id})" style="font-size:10px">+ 添加档次</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ==================== TODAY CHECK-IN ====================
+function isRestDay(habit){ return habit.restDays.includes(new Date().getDay()); }
+function getCheckin(habitId,date){ return store.checkins.find(c=>c.habitId===habitId&&c.date===date); }
+
+function setCheckin(habitId,date,levelId,note){
+  const existing=store.checkins.find(c=>c.habitId===habitId&&c.date===date);
+  if(existing){
+    if(levelId===null||levelId===undefined){store.checkins=store.checkins.filter(c=>c!==existing);}
+    else{existing.levelId=levelId;if(note!==undefined)existing.note=note;}
+  }else if(levelId!==null&&levelId!==undefined){
+    store.checkins.push({habitId,date,levelId,note:note||''});
+  }
+  saveStore(); renderToday();
+}
+
+function renderToday(){
+  todayStr=getTodayStr();
+  document.getElementById('today-date').textContent='📌 '+fmtDate(todayStr);
+  const grid=document.getElementById('checkin-grid'), empty=document.getElementById('today-empty');
+  const enabled=store.habits.filter(h=>h.enabled);
+  if(!enabled.length){grid.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+
+  grid.innerHTML=enabled.map(h=>{
+    const rest=isRestDay(h), ci=getCheckin(h.id,todayStr), done=ci&&ci.levelId!=null;
+    const cat=h.categoryId?store.categories.find(c=>c.id===h.categoryId):null;
+
+    const levelBtns=(h.levels||[]).map((l,i)=>{
+      const active=ci&&ci.levelId===l.id?' active':'';
+      const tc=TIER_CLASSES[i]||'';
+      return `<button class="level-btn ${tc}${active}" onclick="setCheckin(${h.id},'${todayStr}',${l.id})">${l.emoji}<br>${escHtml(l.name)}</button>`;
+    }).join('');
+
+    const noteVal=ci?ci.note||'':'';
+    return `<div class="checkin-card${rest?' rest-day':''}${done?' done':''}">
+      <div class="habit-name">
+        <span>${escHtml(h.name)} ${cat?`<span class="pill pill-cat">${escHtml(cat.name)}</span>`:''}</span>
+        ${rest?'<span class="pill pill-rest">休息日</span>':''}
+        ${done?'<span style="color:var(--green);font-size:18px">✓</span>':''}
+      </div>
+      ${rest?'<div style="font-size:11px;color:var(--text2);margin-bottom:8px">今天是休息日，可以跳过~</div>':''}
+      <div class="level-btns">${levelBtns}</div>
+      <input style="font-size:11px;margin-top:4px" placeholder="${escHtml(h.noteTemplate||'快速记录…')}" value="${escHtml(noteVal)}"
+        onchange="setCheckin(${h.id},'${todayStr}',${ci?ci.levelId:'null'},this.value)" onblur="this.value=this.value">
+    </div>`;
+  }).join('');
+}
+
+function checkAllDone(){
+  const today=getTodayStr();
+  store.habits.filter(h=>h.enabled&&!isRestDay(h)).forEach(h=>{
+    const topLevel=h.levels[h.levels.length-1];
+    if(topLevel) setCheckin(h.id,today,topLevel.id);
+  });
+  renderToday(); toast('全部标为最高完成档');
+}
+
+// ==================== NOTES ====================
+function addNote(){
+  const content=document.getElementById('note-content').value.trim();
+  if(!content) return toast('请输入内容');
+  const habitId=document.getElementById('note-habit').value?parseInt(document.getElementById('note-habit').value):null;
+  store.notes.push({id:genId(),habitId,date:getTodayStr(),content,createdAt:new Date().toISOString()});
+  saveStore(); document.getElementById('note-content').value=''; renderNotes(); toast('笔记已保存');
+}
+function deleteNote(id){store.notes=store.notes.filter(n=>n.id!==id);saveStore();renderNotes();}
+function renderNotes(){
+  const hid=document.getElementById('notes-filter')?.value||'', fd=document.getElementById('notes-date')?.value||'';
+  let notes=store.notes;
+  if(hid) notes=notes.filter(n=>n.habitId===parseInt(hid));
+  if(fd) notes=notes.filter(n=>n.date===fd);
+  const list=document.getElementById('notes-list');
+  if(!notes.length){list.innerHTML='<div class="empty">暂无笔记</div>';return;}
+  list.innerHTML=notes.slice().reverse().map(n=>{
+    const habit=n.habitId?store.habits.find(h=>h.id===n.habitId):null;
+    return `<div class="note-item">
+      <div class="note-meta"><span>📅 ${n.date}</span>${habit?`<span>📍 ${escHtml(habit.name)}</span>`:''}<span>${new Date(n.createdAt).toLocaleString('zh-CN')}</span></div>
+      <div class="note-body">${escHtml(n.content)}</div>
+      <button class="btn btn-ghost btn-xs" style="margin-top:6px" onclick="deleteNote(${n.id})">删除</button>
+    </div>`;
+  }).join('');
+}
+
+// ==================== STATS ====================
+function updateStatsSelects(){
+  const sel=document.getElementById('stats-habit');
+  if(!sel) return;
+  const val=sel.value;
+  sel.innerHTML='<option value="">全部习惯</option>';
+  store.habits.forEach(h=>{sel.innerHTML+=`<option value="${h.id}">${escHtml(h.name)}</option>`;});
+  if([...sel.options].some(o=>o.value===val)) sel.value=val;
+}
+
+function renderStats(){
+  const habitId=document.getElementById('stats-habit').value?parseInt(document.getElementById('stats-habit').value):null;
+  const mi=document.getElementById('stats-month'); if(!mi.value) mi.value=getTodayStr().slice(0,7);
+  const [yr,mn]=mi.value.split('-').map(Number);
+  const habits=habitId?store.habits.filter(h=>h.id===habitId):store.habits;
+  const rel=store.checkins.filter(c=>habits.some(h=>h.id===c.habitId)&&c.date>=`${yr}-${String(mn).padStart(2,'0')}-01`);
+  let perfect=0;
+  rel.forEach(c=>{
+    const h=habits.find(h=>h.id===c.habitId);
+    if(h&&h.levels.length&&c.levelId===h.levels[h.levels.length-1].id) perfect++;
+  });
+  document.getElementById('stats-cards').innerHTML=`
+    <div class="stat-card"><div class="stat-num" style="color:var(--accent)">${rel.length}</div><div class="stat-label">打卡次数</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--green)">${perfect}</div><div class="stat-label">完美完成</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--yellow)">${habits.length}</div><div class="stat-label">跟踪习惯</div></div>`;
+  renderCalendar(yr,mn,habits);
+}
+
+let _calHabits=[], _calYear=0, _calMonth=0;
+function renderCalendar(yr,mn,habits){
+  _calHabits=habits; _calYear=yr; _calMonth=mn;
+  const c=document.getElementById('stats-calendar');
+  const dim=new Date(yr,mn,0).getDate(), today=getTodayStr();
+  const firstDow=new Date(yr,mn-1,1).getDay();
+  const dm={};
+  store.checkins.forEach(ci=>{
+    const h=habits.find(h=>h.id===ci.habitId); if(!h) return;
+    const l=h.levels.find(l=>l.id===ci.levelId); const v=l?l.value:0;
+    if(!(ci.date in dm)||v>dm[ci.date]) dm[ci.date]=v;
+  });
+
+  let html='<div class="cal-grid">';
+  const wds=['日','一','二','三','四','五','六'];
+  wds.forEach(w=>{html+=`<div class="cal-wd">${w}</div>`;});
+  for(let i=0;i<firstDow;i++){html+='<div class="cal-cell placeholder"></div>';}
+  for(let d=1;d<=dim;d++){
+    const dt=`${yr}-${String(mn).padStart(2,'0')}-${String(d).padStart(2,'0')}`, v=dm[dt];
+    const isT=dt===today;
+    let cls='';
+    if(v!==undefined){cls=v===0?'tier0':v===1?'tier1':v===2?'tier2':'tier3';}
+    const allRest=habits.length>0&&habits.every(h=>h.restDays.includes(new Date(dt).getDay()));
+    if(v===undefined&&allRest) cls='rest';
+    else if(v===undefined) cls='no-checkin';
+    html+=`<div class="cal-cell ${cls}${isT?' today':''}" onclick="showCalDay('${dt}')" title="${dt}${v!==undefined?' · 等级'+v:(allRest?' · 休息日':'')}">${d}</div>`;
+  }
+  html+='</div>';
+  html+='<div style="display:flex;gap:12px;margin-top:10px;font-size:10px;color:var(--text2);flex-wrap:wrap">';
+  html+='<span>■ 未完成</span><span>■ 部分</span><span>■ 完成</span><span>■ 超额</span><span>■ 休息日</span><span>■ 未打卡</span>';
+  html+='</div>';
+  c.innerHTML=html;
+}
+
+function showCalDay(dt){
+  // highlight selected cell
+  document.querySelectorAll('#stats-calendar .cal-cell').forEach(el=>el.classList.remove('selected'));
+  const cells=document.querySelectorAll('#stats-calendar .cal-cell');
+  cells.forEach(el=>{if(el.textContent.trim()===dt.slice(-2).replace(/^0/,'')||el.textContent.trim()===String(parseInt(dt.slice(-2))))el.classList.add('selected');});
+  
+  const panel=document.getElementById('cal-detail');
+  const habits=_calHabits;
+  if(!habits.length){panel.style.display='none';return;}
+  
+  const checkins=store.checkins.filter(c=>c.date===dt);
+  const notes=store.notes.filter(n=>n.date===dt);
+  
+  let html=`<h3 style="margin-bottom:8px">📅 ${dt} 打卡详情</h3>`;
+  let hasContent=false;
+  
+  habits.forEach(h=>{
+    const ci=checkins.find(c=>c.habitId===h.id);
+    const lv=ci?getLevelById(h,ci.levelId):null;
+    const isRest=h.restDays.includes(new Date(dt).getDay());
+    const cat=h.categoryId?store.categories.find(c=>c.id===h.categoryId):null;
+    const tierColors=['var(--red)','var(--orange)','var(--yellow)','var(--green)','var(--accent)'];
+    const lvIdx=lv?h.levels.findIndex(l=>l.id===lv.id):-1;
+    const color=lvIdx>=0?tierColors[lvIdx]||'var(--accent)':'var(--text2)';
+    
+    html+=`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px">`;
+    html+=`<span style="font-weight:600;min-width:100px">${escHtml(h.name)}</span>`;
+    if(cat) html+=`<span class="pill pill-cat">${escHtml(cat.name)}</span>`;
+    if(isRest) html+=`<span class="pill pill-rest">休息日</span>`;
+    html+=`<span style="color:${color};margin-left:auto;font-weight:600">${lv?lv.emoji+' '+lv.name:(isRest?'跳过':'未打卡')}</span>`;
+    if(ci&&ci.note) html+=`<span style="font-size:10px;color:var(--text2);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(ci.note)}">💬 ${escHtml(ci.note)}</span>`;
+    html+=`</div>`;
+    hasContent=true;
+  });
+  
+  // Show notes for this day
+  if(notes.length){
+    html+=`<div style="margin-top:10px"><strong style="font-size:12px">📝 当日笔记:</strong></div>`;
+    notes.forEach(n=>{
+      const h=n.habitId?store.habits.find(h=>h.id===n.habitId):null;
+      html+=`<div style="font-size:11px;padding:4px 0;color:var(--text2)">${h?'['+escHtml(h.name)+'] ':''}${escHtml(n.content)}</div>`;
+    });
+    hasContent=true;
+  }
+  
+  if(!hasContent) html+='<div style="color:var(--text2);font-size:12px">当天无打卡记录</div>';
+  
+  panel.innerHTML=html;
+  panel.style.display='block';
+}
+
+
+// ==================== REMINDERS ====================
+let reminderInterval=null;
+function addReminder(){
+  const t=document.getElementById('reminder-time').value, txt=document.getElementById('reminder-text').value.trim();
+  const ntf=document.getElementById('reminder-notif').checked;
+  if(!t) return toast('请选择时间');
+  store.reminders.push({id:genId(),time:t,text:txt||'记得打卡哦！',notify:ntf,enabled:true});
+  saveStore(); renderReminders(); toast('提醒已添加');
+}
+function toggleReminder(id){const r=store.reminders.find(r=>r.id===id);if(r){r.enabled=!r.enabled;saveStore();renderReminders();}}
+function deleteReminder(id){store.reminders=store.reminders.filter(r=>r.id!==id);saveStore();renderReminders();}
+function renderReminders(){
+  const el=document.getElementById('reminders-list');
+  if(!store.reminders.length){el.innerHTML='<div class="empty">暂无提醒</div>';return;}
+  el.innerHTML=store.reminders.map(r=>`<div class="reminder-row">
+    <span style="font-size:16px;font-weight:600;min-width:45px">${r.time}</span><span style="flex:1">${escHtml(r.text)}</span>
+    <span style="font-size:10px;color:var(--text2)">${r.notify?'🔔':'🔕'}</span>
+    <span class="pill" style="cursor:pointer;${r.enabled?'':'opacity:0.4'}" onclick="toggleReminder(${r.id})">${r.enabled?'启用':'停用'}</span>
+    <button class="btn btn-ghost btn-xs" onclick="deleteReminder(${r.id})">✕</button></div>`).join('');
+}
+function checkReminders(){
+  const n=new Date(), ts=[n.getHours(),n.getMinutes()].map(v=>String(v).padStart(2,'0')).join(':');
+  store.reminders.forEach(r=>{if(r.enabled&&r.time===ts&&r.lastFired!==getTodayStr()){r.lastFired=getTodayStr();saveStore();toast('⏰ '+r.text);if(r.notify&&'Notification' in window&&Notification.permission==='granted')new Notification('Habit Tracker',{body:r.text});}});
+}
+function requestNotificationPermission(){if('Notification' in window&&Notification.permission==='default')Notification.requestPermission();}
+
+// ==================== EXPORT PDF ====================
+function renderExportPreview(){
+  const hid=document.getElementById('export-habit').value?parseInt(document.getElementById('export-habit').value):null;
+  const s=document.getElementById('export-start').value, e=document.getElementById('export-end').value;
+  const habits=hid?store.habits.filter(h=>h.id===hid):store.habits;
+  if(!habits.length){document.getElementById('export-preview').innerHTML='<div class="empty">暂无数据</div>';return;}
+  let html='';
+  habits.forEach(h=>{
+    let ci=store.checkins.filter(c=>c.habitId===h.id); if(s) ci=ci.filter(c=>c.date>=s); if(e) ci=ci.filter(c=>c.date<=e);
+    html+=`<h3 style="margin-top:10px">${escHtml(h.name)}</h3><div style="font-size:11px;color:var(--text2)">打卡次数: ${ci.length}</div>`;
+    if(ci.length){html+='<table class="export-table"><tr><th>日期</th><th>完成档次</th><th>备注</th></tr>';
+      ci.sort((a,b)=>b.date.localeCompare(a.date)).forEach(c=>{const l=getLevelById(h,c.levelId);html+=`<tr><td>${c.date}</td><td>${l?l.emoji+' '+l.name:'—'}</td><td>${escHtml(c.note||'')}</td></tr>`;});
+      html+='</table>';}
+  });
+  document.getElementById('export-preview').innerHTML=html;
+}
+
+function exportPDF(){
+  const hid=document.getElementById('export-habit').value?parseInt(document.getElementById('export-habit').value):null;
+  const s=document.getElementById('export-start').value, e=document.getElementById('export-end').value;
+  const habits=hid?store.habits.filter(h=>h.id===hid):store.habits;
+  if(!habits.length) return toast('没有可导出的数据');
+  const {jsPDF}=window.jspdf; const doc=new jsPDF(); let y=15;
+  doc.setFontSize(15); doc.text('Habit Tracker — 习惯打卡报告',14,y); y+=7;
+  doc.setFontSize(9); doc.text('导出时间: '+new Date().toLocaleString('zh-CN'),14,y);
+  if(s||e){y+=5;doc.text('日期范围: '+(s||'不限')+' ~ '+(e||'不限'),14,y);}
+  y+=8;
+  habits.forEach(h=>{
+    if(y>265){doc.addPage();y=15;}
+    doc.setFontSize(12); doc.text('习惯: '+h.name,14,y); y+=6;
+    let ci=store.checkins.filter(c=>c.habitId===h.id); if(s) ci=ci.filter(c=>c.date>=s); if(e) ci=ci.filter(c=>c.date<=e);
+    ci.sort((a,b)=>b.date.localeCompare(a.date));
+    doc.setFontSize(9); doc.text('打卡记录: '+ci.length+' 次',14,y); y+=6;
+    ci.forEach(c=>{const l=getLevelById(h,c.levelId);const line=c.date+'  '+(l?l.emoji+' '+l.name:'—')+'  '+(c.note||'');if(y>272){doc.addPage();y=15;}doc.text(line,18,y);y+=5;});
+    const hn=store.notes.filter(n=>n.habitId===h.id);
+    if(hn.length){y+=4;doc.setFontSize(10);doc.text('笔记:',14,y);y+=5;doc.setFontSize(9);
+      hn.slice().reverse().forEach(n=>{const dt=new Date(n.createdAt).toLocaleString('zh-CN');const ls=doc.splitTextToSize(n.date+' '+dt+': '+n.content,175);if(y+ls.length*4>272){doc.addPage();y=15;}ls.forEach(l=>{doc.text(l,18,y);y+=4;});y+=2;});}
+    y+=6;
+  });
+  doc.save('habit-tracker-report.pdf'); toast('PDF 已导出');
+}
+
+// ==================== DATA IO ====================
+function exportData(){const b=new Blob([JSON.stringify(store,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='habit-tracker-backup.json';a.click();URL.revokeObjectURL(a.href);toast('数据已导出');}
+function importData(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.habits)return toast('无效的数据文件');if(!confirm('导入将覆盖当前所有数据，确定继续？'))return;store=d;migrateIfNeeded(store);saveStore();refreshAll();toast('数据已导入');}catch(e){toast('导入失败：文件格式错误');}};r.readAsText(f);ev.target.value='';}
+function clearAllData(){if(!confirm('确定要清除所有数据？此操作不可撤销！'))return;store=defaultStore();saveStore();refreshAll();toast('所有数据已清除');}
+
+// ==================== REFRESH ====================
+function refreshSelects(){
+  ['habit-category','stats-habit','notes-filter','note-habit','export-habit'].forEach(sid=>{
+    const sel=document.getElementById(sid); if(!sel) return; const val=sel.value;
+    if(sid==='habit-category'){sel.innerHTML='<option value="">无分类</option>';store.categories.forEach(c=>{sel.innerHTML+=`<option value="${c.id}">${escHtml(c.name)}</option>`;});}
+    else{const ao=sid==='stats-habit'||sid==='notes-filter'||sid==='export-habit'?'<option value="">全部习惯</option>':'<option value="">无关联</option>';sel.innerHTML=ao;store.habits.forEach(h=>{sel.innerHTML+=`<option value="${h.id}">${escHtml(h.name)}</option>`;});}
+    if([...sel.options].some(o=>o.value===val)) sel.value=val;
+  });
+}
+function refreshAll(){renderToday();renderHabits();renderCategories();renderNotes();renderReminders();refreshSelects();}
+
+// ==================== INIT ====================
+function init(){
+  initWeekdayPicker(); refreshAll(); requestNotificationPermission();
+  reminderInterval=setInterval(checkReminders,30000); checkReminders();
+  document.getElementById('notes-date').value=getTodayStr();
+  ['export-habit','export-start','export-end'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('change',renderExportPreview);});
+  document.getElementById('stats-month').value=getTodayStr().slice(0,7);
+}
+init();
+</script>
+</body>
+</html>

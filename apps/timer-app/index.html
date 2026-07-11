@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Focus Timer — 专注计时器</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #222530;
+    --border: #2a2d3a;
+    --text: #e1e4ed;
+    --text2: #8b8fa8;
+    --accent: #6c8cff;
+    --accent2: #a78bfa;
+    --green: #34d399;
+    --red: #f87171;
+    --orange: #fb923c;
+    --radius: 12px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg); color: var(--text);
+    display: flex; height: 100vh; overflow: hidden;
+  }
+  /* Sidebar */
+  nav {
+    width: 220px; background: var(--surface); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; padding: 20px 0; flex-shrink: 0;
+  }
+  nav .logo { font-size: 18px; font-weight: 700; padding: 0 20px 24px; color: var(--accent); letter-spacing: -0.3px; }
+  nav .nav-item {
+    padding: 10px 20px; cursor: pointer; color: var(--text2); font-size: 14px;
+    border-left: 3px solid transparent; transition: all 0.15s;
+  }
+  nav .nav-item:hover { color: var(--text); }
+  nav .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(108,140,255,0.06); }
+  nav .spacer { flex: 1; }
+  /* Main */
+  main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .page { display: none; flex: 1; flex-direction: column; padding: 28px 32px; overflow-y: auto; }
+  .page.active { display: flex; }
+  .page h2 { font-size: 22px; font-weight: 700; margin-bottom: 20px; letter-spacing: -0.3px; }
+  /* Cards */
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 20px; margin-bottom: 16px;
+  }
+  .card h3 { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
+  /* Buttons */
+  .btn {
+    padding: 8px 18px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #5b7df5; }
+  .btn-danger { background: transparent; color: var(--red); border: 1px solid var(--red); }
+  .btn-danger:hover { background: rgba(248,113,113,0.1); }
+  .btn-sm { padding: 5px 12px; font-size: 12px; }
+  .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--text2); }
+  .btn-green { background: var(--green); color: #000; }
+  .btn-green:hover { background: #2cc48a; }
+  /* Inputs */
+  input, textarea, select {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text); padding: 10px 14px; font-size: 14px; width: 100%;
+    font-family: inherit; outline: none; transition: border 0.15s;
+  }
+  input:focus, textarea:focus { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 80px; }
+  label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 5px; font-weight: 500; }
+  /* Form row */
+  .form-row { display: flex; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+  .form-row > div { flex: 1; min-width: 140px; }
+  /* Timer display */
+  .timer-display { font-size: 80px; font-weight: 200; text-align: center; font-variant-numeric: tabular-nums; letter-spacing: -2px; margin: 20px 0 10px; }
+  .timer-controls { display: flex; gap: 12px; justify-content: center; margin: 16px 0; }
+  .progress-bar {
+    height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; margin: 12px 0;
+  }
+  .progress-bar .fill {
+    height: 100%; background: var(--accent); border-radius: 3px; transition: width 1s linear;
+    width: 0%;
+  }
+  .progress-bar .fill.danger { background: var(--red); }
+  .progress-label { text-align: center; font-size: 13px; color: var(--text2); }
+  /* Task selector */
+  .task-option {
+    padding: 12px 16px; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; cursor: pointer; margin-bottom: 8px; transition: all 0.15s;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .task-option:hover { border-color: var(--accent); }
+  .task-option.selected { border-color: var(--accent); background: rgba(108,140,255,0.06); }
+  .task-meta { font-size: 12px; color: var(--text2); display: flex; gap: 16px; }
+  .task-meta span { display: flex; align-items: center; gap: 4px; }
+  /* Notes list */
+  .note-item {
+    background: var(--surface2); border-radius: 8px; padding: 14px; margin-bottom: 8px;
+    border-left: 3px solid var(--accent2);
+  }
+  .note-item .note-time { font-size: 11px; color: var(--text2); margin-bottom: 6px; }
+  .note-item .note-body { font-size: 14px; white-space: pre-wrap; }
+  /* Reminder row */
+  .reminder-row {
+    display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+    background: var(--surface2); border-radius: 8px; margin-bottom: 8px;
+  }
+  .reminder-row input[type="time"] { width: auto; }
+  .reminder-row input[type="checkbox"] { width: auto; accent-color: var(--accent); }
+  /* Tags / pills */
+  .pill {
+    display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px;
+    font-weight: 600; background: rgba(108,140,255,0.12); color: var(--accent);
+  }
+  .pill.warn { background: rgba(251,146,60,0.12); color: var(--orange); }
+  .pill.success { background: rgba(52,211,153,0.12); color: var(--green); }
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset:0; background: rgba(0,0,0,0.6);
+    display: flex; align-items: center; justify-content: center; z-index: 100;
+  }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; width: 440px; max-width: 90vw; }
+  .modal h3 { margin-bottom: 16px; }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+  /* Empty state */
+  .empty { text-align: center; padding: 40px 20px; color: var(--text2); }
+  .empty .icon { font-size: 40px; margin-bottom: 12px; opacity: 0.5; }
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 8px; padding: 12px 20px;
+    font-size: 13px; z-index: 200; animation: slideUp 0.3s ease;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+  }
+  @keyframes slideUp { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
+  /* Export preview */
+  .export-table { width:100%; border-collapse: collapse; font-size:13px; margin-top:12px; }
+  .export-table th, .export-table td { padding: 8px 12px; text-align: left; border-bottom:1px solid var(--border); }
+  .export-table th { color: var(--text2); font-weight: 600; font-size: 11px; text-transform: uppercase; }
+  /* Responsive */
+  @media (max-width: 700px) {
+    nav { width: 60px; }
+    nav .nav-item { padding: 10px; text-align: center; font-size: 0; }
+    nav .nav-item::first-letter { font-size: 16px; font-weight: 700; color: inherit; }
+    .page { padding: 20px 16px; }
+    .timer-display { font-size: 52px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">⏱️ Focus Timer</div>
+  <div class="nav-item active" data-page="timer">⏱ 计时器</div>
+  <div class="nav-item" data-page="tasks">📋 任务管理</div>
+  <div class="nav-item" data-page="notes">📝 笔记</div>
+  <div class="nav-item" data-page="reminders">🔔 提醒</div>
+  <div class="nav-item" data-page="export">📤 导出</div>
+  <div class="spacer"></div>
+  <div class="nav-item" data-page="settings">⚙ 设置</div>
+</nav>
+
+<main>
+
+  <!-- TIMER PAGE -->
+  <div class="page active" id="page-timer">
+    <h2>专注计时</h2>
+    <div class="card" id="timer-task-selector">
+      <h3>选择任务</h3>
+      <div id="timer-task-list"></div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="switchPage('tasks')">+ 新建任务</button>
+    </div>
+    <div class="card">
+      <div class="timer-display" id="timer-display">00:00:00</div>
+      <div style="text-align:center;font-size:13px;color:var(--text2)">
+        今日目标: <span id="timer-daily-goal">--</span> | 今日已计: <span id="timer-today-spent">0m</span>
+      </div>
+      <div class="progress-bar"><div class="fill" id="timer-progress"></div></div>
+      <div class="progress-label" id="timer-progress-label"></div>
+      <div class="timer-controls">
+        <button class="btn btn-primary" id="btn-start" onclick="toggleTimer()">▶ 开始</button>
+        <button class="btn btn-ghost" id="btn-reset" onclick="resetTimer()">↺ 重置</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3>快捷笔记</h3>
+      <textarea id="quick-note" placeholder="记录当前想法…" style="min-height:60px"></textarea>
+      <button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="addQuickNote()">保存笔记</button>
+    </div>
+  </div>
+
+  <!-- TASKS PAGE -->
+  <div class="page" id="page-tasks">
+    <h2>任务管理</h2>
+    <div class="card">
+      <h3>新建任务</h3>
+      <div class="form-row">
+        <div><label>任务名称</label><input id="task-name" placeholder="例如：学习编程"></div>
+        <div><label>总时长 (分钟)</label><input id="task-total" type="number" placeholder="总分钟数" min="1"></div>
+        <div><label>每日时长 (分钟)</label><input id="task-daily" type="number" placeholder="每日分钟数" min="1"></div>
+      </div>
+      <button class="btn btn-primary" onclick="addTask()">+ 添加任务</button>
+    </div>
+    <div id="tasks-list"></div>
+  </div>
+
+  <!-- NOTES PAGE -->
+  <div class="page" id="page-notes">
+    <h2>笔记</h2>
+    <div style="margin-bottom:16px">
+      <label>按任务筛选</label>
+      <select id="notes-filter" onchange="renderNotes()">
+        <option value="">全部任务</option>
+      </select>
+    </div>
+    <div class="card">
+      <textarea id="note-content" placeholder="写下你的想法…"></textarea>
+      <div style="margin-top:8px;display:flex;gap:8px;align-items:flex-end">
+        <div style="flex:1"><label>关联任务</label><select id="note-task"><option value="">无关联</option></select></div>
+        <button class="btn btn-primary" onclick="addNote()">保存笔记</button>
+      </div>
+    </div>
+    <div id="notes-list"></div>
+  </div>
+
+  <!-- REMINDERS PAGE -->
+  <div class="page" id="page-reminders">
+    <h2>每日提醒</h2>
+    <div class="card">
+      <h3>添加提醒</h3>
+      <div class="form-row">
+        <div style="flex:0 0 auto"><label>时间</label><input type="time" id="reminder-time" value="09:00"></div>
+        <div><label>提醒文字</label><input id="reminder-text" placeholder="该开始专注了！"></div>
+      </div>
+      <div class="form-row">
+        <div><label>关联任务 (可选)</label><select id="reminder-task"><option value="">无关联</option></select></div>
+        <div style="flex:0 0 auto;display:flex;align-items:flex-end;gap:8px">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;white-space:nowrap">
+            <input type="checkbox" id="reminder-notif" checked> 桌面通知
+          </label>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="addReminder()">+ 添加提醒</button>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3>提醒列表</h3>
+      <div id="reminders-list"></div>
+      <div style="margin-top:12px;font-size:12px;color:var(--text2)">
+        ⚠ 提醒仅在页面打开时生效。请保持此页面在浏览器中打开，并允许桌面通知权限。
+      </div>
+    </div>
+  </div>
+
+  <!-- EXPORT PAGE -->
+  <div class="page" id="page-export">
+    <h2>导出报告</h2>
+    <div class="card">
+      <h3>导出选项</h3>
+      <div class="form-row">
+        <div><label>任务</label><select id="export-task"><option value="">全部任务</option></select></div>
+        <div style="flex:0 0 auto;display:flex;align-items:flex-end">
+          <button class="btn btn-primary" onclick="exportPDF()" id="btn-export">📄 导出 PDF</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>预览</h3>
+      <div id="export-preview" style="overflow-x:auto"></div>
+    </div>
+  </div>
+
+  <!-- SETTINGS PAGE -->
+  <div class="page" id="page-settings">
+    <h2>设置</h2>
+    <div class="card">
+      <h3>数据管理</h3>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-ghost" onclick="exportData()">📥 导出全部数据 (JSON)</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('import-file').click()">📤 导入数据 (JSON)</button>
+        <button class="btn btn-danger" onclick="clearAllData()">🗑 清除所有数据</button>
+      </div>
+      <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+    </div>
+    <div class="card">
+      <h3>关于</h3>
+      <p style="font-size:13px;color:var(--text2);line-height:1.6">
+        Focus Timer — 一个纯静态页面的专注计时工具。<br>
+        所有数据存储在浏览器 localStorage 中，不会上传到任何服务器。<br>
+        支持计时、任务管理、笔记、每日提醒和 PDF 导出。
+      </p>
+    </div>
+  </div>
+
+</main>
+
+<div id="toast-container"></div>
+<div id="modal-container"></div>
+
+<script>
+// ========== DATA STORE ==========
+const STORE_KEY = 'focus_timer_data';
+
+function loadStore() {
+  const raw = localStorage.getItem(STORE_KEY);
+  if (raw) {
+    try { return JSON.parse(raw); } catch(e) {}
+  }
+  return {
+    tasks: [],
+    timerRecords: [],   // {taskId, date:'YYYY-MM-DD', seconds, note}
+    notes: [],          // {id, taskId, content, createdAt}
+    reminders: [],      // {id, time:'HH:MM', text, taskId, notify:bool, enabled:bool}
+    activeTimerTask: null,
+    nextId: 1,
+  };
+}
+
+function saveStore() {
+  localStorage.setItem(STORE_KEY, JSON.stringify(store));
+}
+
+function genId() { return store.nextId++; }
+
+let store = loadStore();
+
+// ========== NAVIGATION ==========
+function switchPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const page = document.getElementById('page-' + name);
+  const nav = document.querySelector(`[data-page="${name}"]`);
+  if (page) page.classList.add('active');
+  if (nav) nav.classList.add('active');
+}
+
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => switchPage(item.dataset.page));
+});
+
+// ========== TOAST ==========
+function toast(msg) {
+  const el = document.createElement('div'); el.className = 'toast'; el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 2500);
+}
+
+// ========== TASKS ==========
+function addTask() {
+  const name = document.getElementById('task-name').value.trim();
+  const total = parseInt(document.getElementById('task-total').value);
+  const daily = parseInt(document.getElementById('task-daily').value);
+  if (!name || !total || !daily) return toast('请填写完整信息');
+  const task = { id: genId(), name, totalTime: total * 60, dailyTime: daily * 60, createdAt: new Date().toISOString() };
+  store.tasks.push(task);
+  saveStore();
+  document.getElementById('task-name').value = '';
+  document.getElementById('task-total').value = '';
+  document.getElementById('task-daily').value = '';
+  refreshAll();
+  toast('任务已添加');
+}
+
+function deleteTask(id) {
+  if (!confirm('确定删除此任务及其所有记录？')) return;
+  store.tasks = store.tasks.filter(t => t.id !== id);
+  store.timerRecords = store.timerRecords.filter(r => r.taskId !== id);
+  store.notes = store.notes.filter(n => n.taskId !== id);
+  if (store.activeTimerTask === id) store.activeTimerTask = null;
+  saveStore();
+  refreshAll();
+  toast('任务已删除');
+}
+
+function renderTasks() {
+  const list = document.getElementById('tasks-list');
+  if (!store.tasks.length) {
+    list.innerHTML = '<div class="empty"><div class="icon">📋</div>还没有任务，在上方创建一个吧</div>';
+    return;
+  }
+  list.innerHTML = store.tasks.map(t => {
+    const totalMin = Math.round(t.totalTime / 60);
+    const dailyMin = Math.round(t.dailyTime / 60);
+    const today = getTodayStr();
+    const todaySec = store.timerRecords
+      .filter(r => r.taskId === t.id && r.date === today)
+      .reduce((s, r) => s + r.seconds, 0);
+    const todayMin = Math.round(todaySec / 60);
+    const pct = t.dailyTime > 0 ? Math.min(100, Math.round(todaySec / t.dailyTime * 100)) : 0;
+    const totalSec = store.timerRecords.filter(r => r.taskId === t.id).reduce((s, r) => s + r.seconds, 0);
+    const totalMinSpent = Math.round(totalSec / 60);
+    let pClass = 'pill'; if (pct >= 100) pClass += ' success'; else if (pct >= 70) pClass += ' warn';
+    return `
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <h3 style="margin-bottom:4px">${escHtml(t.name)}</h3>
+            <div class="task-meta">
+              <span>📐 总计划: ${totalMin}m</span>
+              <span>📅 每日: ${dailyMin}m</span>
+              <span>⏱ 已用: ${totalMinSpent}m / ${totalMin}m</span>
+            </div>
+          </div>
+          <span class="${pClass}">今日 ${pct}% (${todayMin}m)</span>
+        </div>
+        <div class="progress-bar" style="margin-top:12px"><div class="fill" style="width:${pct}%"></div></div>
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <button class="btn btn-primary btn-sm" onclick="startTimerForTask(${t.id})">▶ 开始计时</button>
+          <button class="btn btn-ghost btn-sm" onclick="deleteTask(${t.id})">删除</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function getTodayStr() { return new Date().toISOString().slice(0, 10); }
+
+// ========== TIMER ==========
+let timerInterval = null;
+let timerSeconds = 0;
+let timerRunning = false;
+
+function startTimerForTask(id) {
+  store.activeTimerTask = id;
+  saveStore();
+  switchPage('timer');
+  renderTimerTaskList();
+}
+
+function renderTimerTaskList() {
+  const list = document.getElementById('timer-task-list');
+  if (!store.tasks.length) {
+    list.innerHTML = '<div class="empty" style="padding:20px">暂无任务，请先创建</div>';
+    return;
+  }
+  list.innerHTML = store.tasks.map(t => {
+    const sel = store.activeTimerTask === t.id ? ' selected' : '';
+    return `<div class="task-option${sel}" onclick="selectTimerTask(${t.id})">
+      <div>
+        <strong>${escHtml(t.name)}</strong>
+        <div class="task-meta" style="margin-top:4px">每日 ${Math.round(t.dailyTime/60)}m | 总计 ${Math.round(t.totalTime/60)}m</div>
+      </div>
+      ${sel ? '<span class="pill">当前</span>' : ''}
+    </div>`;
+  }).join('');
+}
+
+function selectTimerTask(id) {
+  if (timerRunning) { if (!confirm('正在计时中，切换任务将暂停当前计时。确定吗？')) return; pauseTimer(); }
+  store.activeTimerTask = id;
+  saveStore();
+  renderTimerTaskList();
+  updateTimerDisplay();
+}
+
+function toggleTimer() {
+  if (timerRunning) { pauseTimer(); return; }
+  startTimer();
+}
+
+function startTimer() {
+  if (!store.activeTimerTask) return toast('请先选择一个任务');
+  timerRunning = true;
+  document.getElementById('btn-start').textContent = '⏸ 暂停';
+  document.getElementById('btn-start').className = 'btn btn-green';
+  timerInterval = setInterval(() => {
+    timerSeconds++;
+    updateTimerDisplay();
+  }, 1000);
+}
+
+function pauseTimer() {
+  timerRunning = false;
+  clearInterval(timerInterval);
+  timerInterval = null;
+  document.getElementById('btn-start').textContent = '▶ 开始';
+  document.getElementById('btn-start').className = 'btn btn-primary';
+  // save record
+  if (timerSeconds > 0 && store.activeTimerTask) {
+    const today = getTodayStr();
+    store.timerRecords.push({ taskId: store.activeTimerTask, date: today, seconds: timerSeconds });
+    timerSeconds = 0;
+    saveStore();
+  }
+  updateTimerDisplay();
+}
+
+function resetTimer() {
+  if (timerRunning) pauseTimer();
+  timerSeconds = 0;
+  updateTimerDisplay();
+}
+
+function updateTimerDisplay() {
+  const h = Math.floor(timerSeconds / 3600);
+  const m = Math.floor((timerSeconds % 3600) / 60);
+  const s = timerSeconds % 60;
+  document.getElementById('timer-display').textContent =
+    [h, m, s].map(v => String(v).padStart(2, '0')).join(':');
+
+  // update task info
+  if (store.activeTimerTask) {
+    const task = store.tasks.find(t => t.id === store.activeTimerTask);
+    if (task) {
+      const today = getTodayStr();
+      const todaySec = store.timerRecords
+        .filter(r => r.taskId === task.id && r.date === today)
+        .reduce((s, r) => s + r.seconds, 0) + timerSeconds;
+      const todayMin = Math.round(todaySec / 60);
+      const dailyMin = Math.round(task.dailyTime / 60);
+      document.getElementById('timer-daily-goal').textContent = dailyMin + 'm';
+      document.getElementById('timer-today-spent').textContent = todayMin + 'm';
+      const pct = task.dailyTime > 0 ? Math.min(100, Math.round(todaySec / task.dailyTime * 100)) : 0;
+      const fill = document.getElementById('timer-progress');
+      fill.style.width = pct + '%';
+      fill.className = 'fill' + (pct >= 100 ? ' danger' : '');
+      document.getElementById('timer-progress-label').textContent =
+        pct >= 100 ? '今日目标已完成！' : `今日进度 ${pct}%（剩余约 ${Math.max(0, dailyMin - todayMin)}m）`;
+    }
+  } else {
+    document.getElementById('timer-daily-goal').textContent = '--';
+    document.getElementById('timer-today-spent').textContent = '0m';
+    document.getElementById('timer-progress').style.width = '0%';
+    document.getElementById('timer-progress-label').textContent = '';
+  }
+}
+
+// ========== NOTES ==========
+function addQuickNote() {
+  const content = document.getElementById('quick-note').value.trim();
+  if (!content) return toast('请输入内容');
+  const note = { id: genId(), taskId: store.activeTimerTask || null, content, createdAt: new Date().toISOString() };
+  store.notes.push(note);
+  saveStore();
+  document.getElementById('quick-note').value = '';
+  toast('笔记已保存');
+}
+
+function addNote() {
+  const content = document.getElementById('note-content').value.trim();
+  if (!content) return toast('请输入内容');
+  const taskId = document.getElementById('note-task').value ? parseInt(document.getElementById('note-task').value) : null;
+  const note = { id: genId(), taskId, content, createdAt: new Date().toISOString() };
+  store.notes.push(note);
+  saveStore();
+  document.getElementById('note-content').value = '';
+  renderNotes();
+  toast('笔记已保存');
+}
+
+function deleteNote(id) {
+  store.notes = store.notes.filter(n => n.id !== id);
+  saveStore();
+  renderNotes();
+  toast('笔记已删除');
+}
+
+function renderNotes() {
+  const filterTask = document.getElementById('notes-filter')?.value || '';
+  let notes = store.notes;
+  if (filterTask) notes = notes.filter(n => n.taskId === parseInt(filterTask));
+
+  const list = document.getElementById('notes-list');
+  if (!notes.length) {
+    list.innerHTML = '<div class="empty"><div class="icon">📝</div>暂无笔记</div>';
+    return;
+  }
+  list.innerHTML = notes.slice().reverse().map(n => {
+    const task = n.taskId ? store.tasks.find(t => t.id === n.taskId) : null;
+    const time = new Date(n.createdAt).toLocaleString('zh-CN');
+    return `<div class="note-item">
+      <div class="note-time">${time} ${task ? ' · ' + escHtml(task.name) : ''}</div>
+      <div class="note-body">${escHtml(n.content)}</div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="deleteNote(${n.id})">删除</button>
+    </div>`;
+  }).join('');
+
+  updateNoteSelects();
+}
+
+function updateNoteSelects() {
+  const selects = ['notes-filter', 'note-task', 'export-task', 'reminder-task'];
+  selects.forEach(sid => {
+    const sel = document.getElementById(sid);
+    if (!sel) return;
+    const val = sel.value;
+    sel.innerHTML = sid === 'notes-filter' || sid === 'export-task' || sid === 'reminder-task'
+      ? '<option value="">全部任务</option>' : '<option value="">无关联</option>';
+    store.tasks.forEach(t => {
+      sel.innerHTML += `<option value="${t.id}">${escHtml(t.name)}</option>`;
+    });
+    sel.value = val;
+  });
+}
+
+// ========== REMINDERS ==========
+let reminderCheckInterval = null;
+
+function addReminder() {
+  const time = document.getElementById('reminder-time').value;
+  const text = document.getElementById('reminder-text').value.trim();
+  const taskId = document.getElementById('reminder-task').value ? parseInt(document.getElementById('reminder-task').value) : null;
+  const notify = document.getElementById('reminder-notif').checked;
+  if (!time) return toast('请选择时间');
+  const reminder = { id: genId(), time, text: text || '该开始专注了！', taskId, notify, enabled: true };
+  store.reminders.push(reminder);
+  saveStore();
+  renderReminders();
+  toast('提醒已添加');
+}
+
+function toggleReminder(id) {
+  const r = store.reminders.find(r => r.id === id);
+  if (r) { r.enabled = !r.enabled; saveStore(); renderReminders(); }
+}
+
+function deleteReminder(id) {
+  store.reminders = store.reminders.filter(r => r.id !== id);
+  saveStore();
+  renderReminders();
+  toast('提醒已删除');
+}
+
+function renderReminders() {
+  const list = document.getElementById('reminders-list');
+  if (!store.reminders.length) {
+    list.innerHTML = '<div class="empty" style="padding:20px">暂无提醒</div>';
+    return;
+  }
+  list.innerHTML = store.reminders.map(r => {
+    const task = r.taskId ? store.tasks.find(t => t.id === r.taskId) : null;
+    return `<div class="reminder-row">
+      <span style="font-size:18px;font-weight:600;min-width:50px">${r.time}</span>
+      <span style="flex:1">${escHtml(r.text)} ${task ? '<span class="pill" style="margin-left:8px">'+escHtml(task.name)+'</span>' : ''}</span>
+      <span style="font-size:12px;color:var(--text2);margin-right:8px">${r.notify ? '🔔通知' : '🔕静音'}</span>
+      <span class="pill" style="cursor:pointer;margin-right:4px;${r.enabled?'':'opacity:0.4'}" onclick="toggleReminder(${r.id})">${r.enabled ? '启用' : '停用'}</span>
+      <button class="btn btn-ghost btn-sm" onclick="deleteReminder(${r.id})">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function checkReminders() {
+  const now = new Date();
+  const timeStr = [now.getHours(), now.getMinutes()].map(v => String(v).padStart(2, '0')).join(':');
+  store.reminders.forEach(r => {
+    if (!r.enabled) return;
+    if (r.time === timeStr && r.lastFired !== getTodayStr()) {
+      r.lastFired = getTodayStr();
+      saveStore();
+      // in-page notification
+      toast(`⏰ ${r.text}`);
+      // desktop notification
+      if (r.notify && 'Notification' in window && Notification.permission === 'granted') {
+        new Notification('Focus Timer 提醒', { body: r.text, icon: '⏱️' });
+      }
+    }
+  });
+}
+
+function requestNotificationPermission() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+
+// ========== EXPORT PDF ==========
+function exportPDF() {
+  const taskFilter = document.getElementById('export-task').value;
+  const taskId = taskFilter ? parseInt(taskFilter) : null;
+
+  // gather data
+  const tasks = taskId ? store.tasks.filter(t => t.id === taskId) : store.tasks;
+  const records = taskId
+    ? store.timerRecords.filter(r => r.taskId === taskId)
+    : store.timerRecords;
+  const notes = taskId
+    ? store.notes.filter(n => n.taskId === taskId)
+    : store.notes;
+
+  if (!tasks.length) return toast('没有可导出的数据');
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = 15;
+
+  doc.setFontSize(16);
+  doc.text('Focus Timer — 导出报告', 14, y);
+  y += 8;
+  doc.setFontSize(10);
+  doc.text(`导出时间: ${new Date().toLocaleString('zh-CN')}`, 14, y);
+  y += 10;
+
+  tasks.forEach(task => {
+    if (y > 260) { doc.addPage(); y = 15; }
+    doc.setFontSize(13);
+    doc.text(`任务: ${task.name}`, 14, y);
+    y += 7;
+    doc.setFontSize(10);
+    const taskRecs = records.filter(r => r.taskId === task.id);
+    const totalSec = taskRecs.reduce((s, r) => s + r.seconds, 0);
+    doc.text(`总计划: ${Math.round(task.totalTime / 60)}m | 每日: ${Math.round(task.dailyTime / 60)}m | 已用: ${Math.round(totalSec / 60)}m`, 14, y);
+    y += 8;
+
+    if (taskRecs.length) {
+      doc.text('计时记录:', 14, y); y += 6;
+      const byDay = {};
+      taskRecs.forEach(r => { byDay[r.date] = (byDay[r.date] || 0) + r.seconds; });
+      Object.entries(byDay).sort().forEach(([date, sec]) => {
+        if (y > 270) { doc.addPage(); y = 15; }
+        doc.text(`  ${date}: ${Math.round(sec / 60)}m`, 18, y);
+        y += 5;
+      });
+    }
+
+    const taskNotes = notes.filter(n => n.taskId === task.id);
+    if (taskNotes.length) {
+      y += 2;
+      doc.text('笔记:', 14, y); y += 6;
+      taskNotes.forEach(n => {
+        const dt = new Date(n.createdAt).toLocaleString('zh-CN');
+        const lines = doc.splitTextToSize(`${dt}: ${n.content}`, 170);
+        if (y + lines.length * 5 > 270) { doc.addPage(); y = 15; }
+        doc.text(lines, 18, y);
+        y += lines.length * 5 + 2;
+      });
+    }
+    y += 6;
+  });
+
+  doc.save('focus-timer-report.pdf');
+  toast('PDF 已导出');
+}
+
+function renderExportPreview() {
+  const taskFilter = document.getElementById('export-task').value;
+  const taskId = taskFilter ? parseInt(taskFilter) : null;
+  const tasks = taskId ? store.tasks.filter(t => t.id === taskId) : store.tasks;
+  const records = taskId ? store.timerRecords.filter(r => r.taskId === taskId) : store.timerRecords;
+
+  const container = document.getElementById('export-preview');
+  if (!tasks.length) { container.innerHTML = '<div class="empty">暂无数据</div>'; return; }
+
+  let html = '';
+  tasks.forEach(task => {
+    const taskRecs = records.filter(r => r.taskId === task.id);
+    const totalSec = taskRecs.reduce((s, r) => s + r.seconds, 0);
+    html += `<h3 style="margin-top:12px">${escHtml(task.name)}</h3>
+      <div style="font-size:12px;color:var(--text2);margin:4px 0">总计划 ${Math.round(task.totalTime/60)}m | 每日 ${Math.round(task.dailyTime/60)}m | 已用 ${Math.round(totalSec/60)}m</div>`;
+    if (taskRecs.length) {
+      const byDay = {};
+      taskRecs.forEach(r => { byDay[r.date] = (byDay[r.date] || 0) + r.seconds; });
+      html += '<table class="export-table"><tr><th>日期</th><th>分钟数</th></tr>';
+      Object.entries(byDay).sort().forEach(([date, sec]) => {
+        html += `<tr><td>${date}</td><td>${Math.round(sec/60)}m</td></tr>`;
+      });
+      html += '</table>';
+    }
+  });
+  container.innerHTML = html;
+}
+
+// ========== DATA IMPORT/EXPORT ==========
+function exportData() {
+  const blob = new Blob([JSON.stringify(store, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'focus-timer-backup.json'; a.click();
+  URL.revokeObjectURL(a.href);
+  toast('数据已导出');
+}
+
+function importData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (!data.tasks || !data.timerRecords || !data.notes || !data.reminders) {
+        return toast('无效的数据文件');
+      }
+      if (!confirm('导入将覆盖当前所有数据，确定继续？')) return;
+      store = data;
+      saveStore();
+      refreshAll();
+      toast('数据已导入');
+    } catch(err) { toast('导入失败：文件格式错误'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+function clearAllData() {
+  if (!confirm('确定要清除所有数据？此操作不可撤销！')) return;
+  store = { tasks: [], timerRecords: [], notes: [], reminders: [], activeTimerTask: null, nextId: 1 };
+  saveStore();
+  refreshAll();
+  toast('所有数据已清除');
+}
+
+// ========== HELPERS ==========
+function escHtml(s) {
+  const d = document.createElement('div'); d.textContent = s; return d.innerHTML;
+}
+
+function refreshAll() {
+  renderTasks();
+  renderTimerTaskList();
+  renderNotes();
+  renderReminders();
+  renderExportPreview();
+  updateTimerDisplay();
+  updateNoteSelects();
+}
+
+// ========== INIT ==========
+function init() {
+  refreshAll();
+  requestNotificationPermission();
+  // check reminders every 30 seconds
+  reminderCheckInterval = setInterval(checkReminders, 30000);
+  // initial check
+  checkReminders();
+  // export preview on filter change
+  document.getElementById('export-task').addEventListener('change', renderExportPreview);
+}
+
+init();
+</script>
+</body>
+</html>
