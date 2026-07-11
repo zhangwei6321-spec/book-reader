@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>✨ 妖怪迷城 — Yokai Labyrinth</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap');
+  body { background: #0d0015; overflow: hidden; font-family: 'Noto Sans SC', 'PingFang SC', sans-serif; user-select: none; }
+
+  #game-canvas { display: block; width: 100vw; height: 100vh; cursor: none; image-rendering: pixelated; image-rendering: crisp-edges; }
+
+  #vignette { position: fixed; inset: 0; pointer-events: none; z-index: 5;
+    box-shadow: inset 0 0 160px 60px rgba(120,40,80,0.40), inset 0 0 40px 15px rgba(0,0,0,0.18);
+    background: radial-gradient(ellipse at center, transparent 60%, rgba(255,140,170,0.06) 100%); }
+
+  /* ---- Top Bar ---- */
+  #top-bar {
+    position: fixed; top: 12px; left: 0; right: 0; z-index: 10; pointer-events: none;
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+  }
+  #floor-tag {
+    background: linear-gradient(135deg, rgba(255,140,170,0.25), rgba(200,100,255,0.20));
+    border: 2px solid rgba(255,183,178,0.55);
+    border-radius: 20px; padding: 6px 20px;
+    color: #FFD4D0; font-size: 14px; font-weight: 700; letter-spacing: 2px;
+    backdrop-filter: blur(10px);
+    text-shadow: 0 0 16px rgba(255,183,178,0.5), 0 0 4px rgba(255,140,170,0.4);
+    animation: tagGlow 2s ease-in-out infinite alternate;
+  }
+  @keyframes tagGlow { from { box-shadow: 0 0 8px rgba(255,183,178,0.2); } to { box-shadow: 0 0 20px rgba(255,140,170,0.4); } }
+
+  /* ---- Bottom HUD ---- */
+  #hud {
+    position: fixed; bottom: 20px; left: 0; right: 0; z-index: 10; pointer-events: none;
+    display: flex; align-items: flex-end; justify-content: center; gap: 14px;
+  }
+
+  /* Character portrait panel */
+  #char-panel {
+    background: linear-gradient(180deg, rgba(255,140,170,0.18), rgba(100,50,150,0.15));
+    border: 2px solid rgba(255,183,178,0.45);
+    border-radius: 20px; padding: 8px;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 24px rgba(255,140,170,0.12);
+    display: flex; align-items: center; gap: 8px;
+  }
+  #char-avatar {
+    width: 56px; height: 56px; border-radius: 14px;
+    border: 2px solid rgba(255,183,178,0.5);
+    image-rendering: pixelated;
+    box-shadow: 0 0 18px rgba(255,140,170,0.35), 0 0 6px rgba(255,183,178,0.3);
+  }
+  #char-name { color: #FFD54F; font-size: 13px; font-weight: 900; letter-spacing: 1px; text-shadow: 0 0 8px rgba(255,213,79,0.3); }
+  #char-lv { color: #FFB7B2; font-size: 11px; font-weight: 700; }
+  #char-hp-text { color: #FF8A80; font-size: 11px; font-weight: 700; }
+
+  /* Stats panel */
+  #stats-panel {
+    background: linear-gradient(180deg, rgba(255,140,170,0.18), rgba(100,50,150,0.15));
+    border: 2px solid rgba(255,183,178,0.45);
+    border-radius: 20px; padding: 12px 16px;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 24px rgba(255,140,170,0.12);
+    min-width: 200px;
+  }
+  .stat-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .stat-icon { font-size: 16px; width: 22px; text-align: center; }
+  .stat-label { color: #FFB7B2; font-size: 12px; font-weight: 700; min-width: 32px; }
+  .hud-bar {
+    flex: 1; height: 14px; border: 2px solid rgba(255,183,178,0.35);
+    background: rgba(0,0,0,0.3); border-radius: 8px; overflow: hidden; position: relative;
+  }
+  .hud-fill { height: 100%; border-radius: 6px; transition: width 0.3s ease; }
+  .health-fill { background: linear-gradient(90deg, #FF5252, #FF8A80, #FF4081); box-shadow: 0 0 8px rgba(255,82,82,0.4); }
+  .stat-val { color: #FFF; font-size: 12px; font-weight: 900; min-width: 36px; text-align: right; text-shadow: 0 0 8px rgba(255,255,255,0.4); }
+
+  #keys-row { display: flex; gap: 8px; margin-top: 6px; }
+  .key-badge {
+    font-size: 11px; font-weight: 700; padding: 2px 10px; border-radius: 10px;
+    border: 1px solid rgba(255,213,79,0.3);
+    background: rgba(255,213,79,0.1); color: #FFD54F;
+  }
+  .key-badge.active { background: rgba(255,213,79,0.25); border-color: rgba(255,213,79,0.6); box-shadow: 0 0 8px rgba(255,213,79,0.25); }
+
+  #score-display {
+    color: #FFD54F; font-size: 13px; font-weight: 900; margin-top: 4px;
+    text-shadow: 0 0 10px rgba(255,213,79,0.3);
+  }
+
+  /* ---- Minimap ---- */
+  #minimap {
+    position: fixed; top: 60px; right: 16px;
+    border: 2px solid rgba(255,183,178,0.4); border-radius: 12px;
+    opacity: 0.82; z-index: 10;
+    box-shadow: 0 0 16px rgba(255,183,178,0.2);
+  }
+
+  /* ---- Messages ---- */
+  #messages { position: fixed; top: 44%; left: 50%; transform: translate(-50%, -50%); z-index: 11; pointer-events: none; text-align: center; }
+  .msg {
+    color: #FFF; font-size: 18px; font-weight: 700; letter-spacing: 1px;
+    text-shadow: 0 0 14px rgba(255,183,178,0.6), 0 0 32px rgba(255,140,170,0.4), 0 2px 4px rgba(0,0,0,0.5);
+    margin: 5px 0; animation: msgFade 3s forwards;
+    background: rgba(60,20,80,0.6); border: 1px solid rgba(255,183,178,0.25);
+    border-radius: 14px; padding: 6px 18px;
+    backdrop-filter: blur(6px);
+  }
+  @keyframes msgFade { 0%{opacity:1;transform:translateY(0) scale(1)} 60%{opacity:1} 100%{opacity:0;transform:translateY(-24px) scale(0.92)} }
+
+  /* ---- Start/End Overlay ---- */
+  #overlay {
+    position: fixed; inset: 0; z-index: 20;
+    background: linear-gradient(160deg, rgba(13,0,21,0.96), rgba(40,15,60,0.96));
+    display: flex; align-items: center; justify-content: center; flex-direction: column;
+  }
+  #overlay.hidden { display: none; }
+
+  #overlay h1 {
+    font-size: 54px;
+    background: linear-gradient(135deg, #FFB7B2, #FF8A80, #FF4081, #E040FB, #7C4DFF);
+    animation: titleShine 3s ease-in-out infinite alternate;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 4px; letter-spacing: 8px; font-weight: 900;
+    filter: drop-shadow(0 0 20px rgba(255,64,129,0.4));
+  }
+  #overlay h2 {
+    font-size: 26px; color: #FFB7B2; font-weight: 700; margin-bottom: 16px; letter-spacing: 10px;
+    text-shadow: 0 0 24px rgba(255,183,178,0.4);
+  }
+  #overlay .sub {
+    font-size: 15px; color: #C8B8E8; margin-bottom: 40px; max-width: 500px; text-align: center; line-height: 2; font-weight: 400;
+  }
+  #overlay .stat { font-size: 24px; color: #FFD54F; margin-bottom: 32px; font-weight: 700; text-shadow: 0 0 18px rgba(255,213,79,0.4); }
+
+  .btn {
+    font-family: 'Noto Sans SC', sans-serif; font-size: 22px; font-weight: 700;
+    padding: 14px 52px; border: none; border-radius: 30px;
+    background: linear-gradient(135deg, #FF8A80, #FF4081);
+    color: #FFF; cursor: pointer; letter-spacing: 3px;
+    transition: all 0.3s ease;
+    box-shadow: 0 6px 28px rgba(255,64,129,0.35);
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 36px rgba(255,64,129,0.5); }
+  .btn:active { transform: translateY(0); }
+
+  .controls-info { margin-top: 44px; font-size: 13px; color: #8B6FB8; text-align: center; line-height: 2.4; font-weight: 400; }
+  .controls-info kbd {
+    border: 1px solid rgba(255,183,178,0.3); padding: 3px 10px; border-radius: 8px;
+    background: rgba(255,183,178,0.1); color: #FFB7B2; font-family: 'Noto Sans SC', sans-serif; font-weight: 700;
+  }
+
+  /* ---- Floor Transition ---- */
+  #floor-name {
+    position: fixed; top: 46%; left: 50%; transform: translate(-50%, -50%); z-index: 15; pointer-events: none;
+    color: #FFF; font-size: 40px; font-weight: 900; letter-spacing: 6px;
+    text-shadow: 0 0 40px rgba(255,140,170,0.7), 0 0 20px rgba(255,183,178,0.6), 0 0 60px rgba(200,100,255,0.3);
+    animation: floorIn 2.6s forwards;
+    background: linear-gradient(135deg, rgba(0,0,0,0.4), rgba(60,20,80,0.3));
+    padding: 8px 40px; border-radius: 16px; border: 1px solid rgba(255,183,178,0.2);
+    backdrop-filter: blur(4px);
+  }
+  @keyframes floorIn { 0%{opacity:0;transform:translate(-50%,-50%) scale(1.4)} 10%{opacity:1;transform:translate(-50%,-50%) scale(1)} 70%{opacity:1} 100%{opacity:0} }
+  @keyframes titleShine { from { filter: drop-shadow(0 0 20px rgba(255,64,129,0.4)) brightness(1); } to { filter: drop-shadow(0 0 30px rgba(255,64,129,0.6)) brightness(1.1); } }
+
+  /* ---- Mobile controls ---- */
+  #mobile-controls { position: fixed; bottom: 120px; left: 0; right: 0; z-index: 12; display: none; justify-content: center; gap: 18px; }
+  .mbtn {
+    width: 56px; height: 56px; border: 2px solid rgba(255,183,178,0.35);
+    background: rgba(255,183,178,0.1); color: #FFB7B2; font-size: 24px;
+    border-radius: 18px; display: flex; align-items: center; justify-content: center;
+    -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+    backdrop-filter: blur(6px);
+  }
+  .mbtn:active { background: rgba(255,183,178,0.25); border-color: rgba(255,183,178,0.6); }
+  .mbtn.use-btn { width: 62px; background: rgba(255,140,170,0.2); border-color: rgba(255,140,170,0.5); font-size: 20px; }
+
+  @media (max-width: 768px) {
+    #mobile-controls { display: flex; }
+    #hud { bottom: 160px; }
+    #minimap { top: 12px; right: 50px; width: 70px; height: 70px; display: none; }
+  }
+</style>
+</head>
+<body>
+<style>
+.prj-bar{position:fixed;top:0;left:0;right:0;z-index:9999;background:#141820;border-bottom:1px solid #282d3a;padding:6px 16px;display:flex;align-items:center;gap:16px;font-size:11px;font-family:-apple-system,BlinkMacSystemFont,sans-serif;flex-wrap:wrap}
+.prj-bar a{color:#7b8196;text-decoration:none;display:inline-flex;align-items:center;gap:4px}
+.prj-bar a:hover{color:#5b9cf5}
+.prj-bar .sep{color:#282d3a}
+.prj-bar .title{color:#e1e6f0;font-weight:600;margin-right:8px}
+.prj-bar+*{margin-top:34px!important}
+body{padding-top:34px}
+</style>
+<div class="prj-bar">
+<span class="title">📦 妖怪迷城</span>
+<span class="sep">|</span>
+<a href="https://zhangwei6321-spec.github.io/book-reader/castle-escape/" target="_blank">🌐 在线访问</a>
+<a href="https://github.com/zhangwei6321-spec/book-reader/tree/master/castle-escape" target="_blank">📂 GitHub 源码</a>
+<a href="https://zhangwei6321-spec.github.io/book-reader/" style="margin-left:auto">🏠 项目工具箱</a>
+</div>
+
+
+<canvas id="game-canvas"></canvas>
+<canvas id="minimap" width="140" height="140"></canvas>
+<div id="vignette"></div>
+
+<div id="top-bar"><div id="floor-tag"></div></div>
+
+<div id="hud">
+  <div id="char-panel" style="display:none">
+    <canvas id="char-avatar" width="56" height="56"></canvas>
+    <div>
+      <div id="char-name">✨ 灵梦</div>
+      <div id="char-lv">Lv.1 见习巫女</div>
+      <div id="char-hp-text"></div>
+    </div>
+  </div>
+  <div id="stats-panel">
+    <div class="stat-row">
+      <span class="stat-icon">❤️</span>
+      <span class="stat-label">HP</span>
+      <div class="hud-bar"><div id="hud-health" class="hud-fill health-fill" style="width:100%"></div></div>
+      <span class="stat-val" id="hud-hp-val">100/100</span>
+    </div>
+    <div id="keys-row">
+      <span class="key-badge" id="key-gold">🔑 金 0</span>
+      <span class="key-badge" id="key-silver">🔑 银 0</span>
+      <span class="key-badge" id="key-crystal">🔑 晶 0</span>
+    </div>
+    <div id="score-display">💰 0 金币</div>
+  </div>
+</div>
+
+<div id="messages"></div>
+
+<div id="overlay">
+  <h1>妖怪迷城</h1>
+  <h2>YOKAI LABYRINTH</h2>
+  <p class="sub">
+    🌸 你将扮演见习巫女「灵梦」，深入妖怪盘踞的古堡。<br>
+    收集钥匙、击败妖怪，找到通往下一层的传送门！<br>
+    小心别被妖怪包围哦～ ✨
+  </p>
+  <button class="btn" onclick="startGame()">进 入 迷 城</button>
+  <div class="controls-info">
+    <kbd>↑ ↓ ← →</kbd> 移动 &nbsp;|&nbsp;
+    
+    <kbd>E</kbd> 开门<br>
+    点击画面锁定鼠标
+  </div>
+</div>
+
+<div id="mobile-controls">
+  <div class="mbtn" id="m-up">▲</div>
+  <div class="mbtn" id="m-left">◀</div>
+  <div class="mbtn use-btn" id="m-use">🔑</div>
+  <div class="mbtn" id="m-right">▶</div>
+  <div class="mbtn" id="m-down">▼</div>
+</div>
+
+<script src="js/engine.js"></script>
+<script src="js/game.js"></script>
+<script>
+const canvas = document.getElementById('game-canvas');
+const ctx = canvas.getContext('2d');
+const offCanvas = document.createElement('canvas');
+offCanvas.width = RENDER_W; offCanvas.height = RENDER_H;
+const offCtx = offCanvas.getContext('2d');
+const minimap = document.getElementById('minimap');
+const mctx = minimap.getContext('2d');
+
+let game, running = false, lastTime = 0;
+const input = { forward:false, backward:false, left:false, right:false, strafeLeft:false, strafeRight:false, use:false, _prevUse:false, mouseX:0 };
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth * (window.devicePixelRatio || 1);
+  canvas.height = window.innerHeight * (window.devicePixelRatio || 1);
+  ctx.imageSmoothingEnabled = false;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// Draw character avatar
+(function drawAvatar() {
+  const ac = document.getElementById('char-avatar');
+  if (!ac) return;
+  const a = ac.getContext('2d');
+  a.imageSmoothingEnabled = false;
+  // Background
+  a.fillStyle = '#2d1040'; a.fillRect(0,0,56,56);
+  // Hair (dark purple)
+  a.fillStyle = '#4a1a6b';
+  a.beginPath(); a.ellipse(28,20,18,18,0,0,Math.PI); a.fill();
+  a.fillRect(10,20,10,24); a.fillRect(36,20,10,24);
+  // Face
+  a.fillStyle = '#FFE0CC';
+  a.beginPath(); a.ellipse(28,26,14,15,0,0,Math.PI*2); a.fill();
+  // Eyes
+  a.fillStyle = '#3a1a3a';
+  a.beginPath(); a.ellipse(22,24,4,5.5,0,0,Math.PI*2); a.fill();
+  a.beginPath(); a.ellipse(34,24,4,5.5,0,0,Math.PI*2); a.fill();
+  // Eye sparkles
+  a.fillStyle = '#FFF';
+  a.beginPath(); a.arc(20,22,1.5,0,Math.PI*2); a.fill();
+  a.beginPath(); a.arc(32,22,1.5,0,Math.PI*2); a.fill();
+  // Mouth
+  a.fillStyle = '#E87878';
+  a.beginPath(); a.ellipse(28,32,3.5,2,0,0,Math.PI); a.fill();
+  // Cheeks
+  a.fillStyle = 'rgba(255,150,150,0.5)';
+  a.beginPath(); a.ellipse(18,30,2.5,2,0,0,Math.PI*2); a.fill();
+  a.beginPath(); a.ellipse(38,30,2.5,2,0,0,Math.PI*2); a.fill();
+  // Hair accessory (flower)
+  a.fillStyle = '#FF8A80'; a.beginPath(); a.arc(40,18,5,0,Math.PI*2); a.fill();
+  a.fillStyle = '#FFD54F'; a.beginPath(); a.arc(40,18,2.5,0,Math.PI*2); a.fill();
+  // Bow on top
+  a.fillStyle = '#FF4081';
+  a.beginPath(); a.moveTo(28,8); a.lineTo(22,14); a.lineTo(28,12); a.fill();
+  a.beginPath(); a.moveTo(28,8); a.lineTo(34,14); a.lineTo(28,12); a.fill();
+})();
+
+// Keyboard
+document.addEventListener('keydown', e => {
+  const k = e.key.toLowerCase();
+  if (k === 'arrowup') input.forward = true;
+  if (k === 'arrowdown') input.backward = true;
+  if (k === 'arrowleft') input.strafeLeft = true;
+  if (k === 'arrowright') input.strafeRight = true;
+  if (k === 'e') input.use = true;
+});
+document.addEventListener('keyup', e => {
+  const k = e.key.toLowerCase();
+  if (k === 'arrowup') input.forward = false;
+  if (k === 'arrowdown') input.backward = false;
+  if (k === 'arrowleft') input.strafeLeft = false;
+  if (k === 'arrowright') input.strafeRight = false;
+  if (k === 'e') input.use = false;
+});
+
+// Mouse
+// Pointer lock disabled
+// Mouse look disabled
+
+// Mobile controls
+['m-up','m-down','m-left','m-right','m-use'].forEach((id, i) => {
+  const btn = document.getElementById(id);
+  const keys = ['forward','backward','left','right','use'];
+  if (!btn) return;
+  btn.addEventListener('pointerdown', e => { e.preventDefault(); input[keys[i]] = true; });
+  btn.addEventListener('pointerup', () => { input[keys[i]] = false; });
+  btn.addEventListener('pointerleave', () => { input[keys[i]] = false; });
+});
+
+function startGame() {
+  document.getElementById('overlay').classList.add('hidden');
+  document.getElementById('char-panel').style.display = 'flex';
+  game = new Game();
+  game.engine.screenW = RENDER_W;
+  game.engine.screenH = RENDER_H;
+  running = true;
+  lastTime = performance.now();
+  requestAnimationFrame(loop);
+}
+
+function loop(now) {
+  if (!running) return;
+  const dt = Math.min((now - lastTime) / 1000, 0.1);
+  lastTime = now;
+
+  game.update(dt, input);
+  input.mouseX = 0;
+
+  game.engine.renderFrame(offCtx, game.player, game.getSprites());
+
+  ctx.fillStyle = '#0d0015';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.imageSmoothingEnabled = false;
+
+  const scaleX = canvas.width / RENDER_W, scaleY = canvas.height / RENDER_H;
+  const scale = Math.min(scaleX, scaleY);
+  const ox = (canvas.width - RENDER_W * scale) / 2;
+  const oy = (canvas.height - RENDER_H * scale) / 2;
+  ctx.drawImage(offCanvas, 0, 0, RENDER_W, RENDER_H, ox, oy, RENDER_W * scale, RENDER_H * scale);
+
+  renderMinimap();
+  updateHUD();
+  renderMessages();
+
+  if (game.floorTransition) {
+    const el = document.getElementById('floor-name');
+    if (el) el.remove();
+    const d = document.createElement('div');
+    d.id = 'floor-name';
+    d.innerHTML = FLOORS[game.currentFloor].name + '<span class="exit-hint">🚪 出口光芒: ' + (FLOORS[game.currentFloor].exitColor || '未知') + '</span>';
+    document.body.appendChild(d);
+  }
+
+  if (game.gameOver || game.gameWon) {
+    running = false;
+    // document.exitPointerLock();
+    showEndScreen();
+  }
+  requestAnimationFrame(loop);
+}
+
+// Minimap
+function renderMinimap() {
+  if (!game) return;
+  const map = game.map, mw = map[0].length, mh = map.length;
+  const cs = Math.ceil(Math.min(minimap.width/mw, minimap.height/mh));
+  const ox = Math.floor((minimap.width - mw*cs)/2), oy = Math.floor((minimap.height - mh*cs)/2);
+  mctx.fillStyle = 'rgba(13,0,21,0.85)';
+  mctx.fillRect(0, 0, minimap.width, minimap.height);
+
+  const wcolors = {1:'#D4C4A8',2:'#E8C4A8',3:'#F0DCC0',4:'#A5D6A7',5:'#FF8A80',7:'#CE93D8',8:'#FFCC80'};
+  for (let y=0;y<mh;y++) for (let x=0;x<mw;x++) {
+    const c = map[y][x];
+    if (c>0 && c!==6) { mctx.fillStyle=wcolors[c]||'#E8DCC8'; mctx.fillRect(ox+x*cs,oy+y*cs,cs,cs); }
+  }
+  if (game.exit) { mctx.fillStyle='#CE93D8'; mctx.fillRect(ox+game.exit.x*cs,oy+game.exit.y*cs,cs,cs); }
+  const icolors = {key:'#FFD54F',health:'#FF8A80',torch:'#FFB74D',coin:'#FFD54F'};
+  for (const it of game.items)
+    if (!it.collected) { mctx.fillStyle=icolors[it.type]||'#FFF'; mctx.fillRect(ox+it.x*cs-1,oy+it.y*cs-1,3,3); }
+  for (const en of game.enemies)
+    if (en.alive) {
+      mctx.fillStyle=en.variant==='boss'?'#E040FB':en.variant==='red'?'#FF8A80':'#64B5F6';
+      mctx.fillRect(ox+en.x*cs-2,oy+en.y*cs-2,4,4);
+    }
+  mctx.fillStyle='#FFD54F';
+  const px=ox+game.player.x*cs, py=oy+game.player.y*cs;
+  mctx.beginPath(); mctx.arc(px,py,3,0,Math.PI*2); mctx.fill();
+  mctx.strokeStyle='#FFD54F'; mctx.lineWidth=1.5;
+  mctx.beginPath(); mctx.moveTo(px,py); mctx.lineTo(px+game.player.dirX*8,py+game.player.dirY*8); mctx.stroke();
+}
+
+function updateHUD() {
+  if (!game) return;
+  const pct = Math.round((game.health/game.maxHealth)*100);
+  document.getElementById('floor-tag').textContent = `${FLOORS[game.currentFloor].name} · ${game.currentFloor+1}/${FLOORS.length}F`;
+  document.getElementById('hud-health').style.width = `${pct}%`;
+  document.getElementById('hud-hp-val').textContent = `${game.health}/${game.maxHealth}`;
+  document.getElementById('char-hp-text').textContent = `❤️ ${game.health}/${game.maxHealth}`;
+  // Key badges
+  const kg = document.getElementById('key-gold'), ks = document.getElementById('key-silver'), kc = document.getElementById('key-crystal');
+  kg.textContent = `🔑 金 ${game.keys.gold||0}`; kg.className = 'key-badge' + (game.keys.gold?' active':'');
+  ks.textContent = `🔑 银 ${game.keys.silver||0}`; ks.className = 'key-badge' + (game.keys.silver?' active':'');
+  kc.textContent = `🔑 晶 ${game.keys.crystal||0}`; kc.className = 'key-badge' + (game.keys.crystal?' active':'');
+  document.getElementById('score-display').textContent = `💰 ${game.score} 金币`;
+}
+
+function renderMessages() {
+  document.getElementById('messages').innerHTML = (game && game.messages.length)
+    ? game.messages.map(m => `<div class="msg">${m}</div>`).join('') : '';
+}
+
+function showEndScreen() {
+  const ov = document.getElementById('overlay');
+  ov.classList.remove('hidden');
+  document.getElementById('char-panel').style.display = 'none';
+  ov.innerHTML = game.gameWon ? `
+    <h1>✨ 恭喜脱出!</h1>
+    <h2>YOU ESCAPED</h2>
+    <p class="stat">最终得分: ${game.score} 金币</p>
+    <p class="sub">灵梦成功净化了妖怪迷城，回到人间！🌸</p>
+    <button class="btn" onclick="location.reload()">再 来 一 次</button>
+  ` : `
+    <h1>💫 被妖怪捉住了</h1>
+    <h2>GAME OVER</h2>
+    <p class="stat">到达: ${FLOORS[game.currentFloor].name} · 得分: ${game.score}</p>
+    <button class="btn" onclick="location.reload()">再 试 一 次</button>
+  `;
+}
+</script>
+</body>
+</html>
