@@ -1,42 +1,63 @@
-# ⚡ 效率工具集
+# 📦 项目工具箱
 
-纯静态效率工具，无需服务器，打开即用。所有数据存储在浏览器本地。
+> 纯静态项目合集，无需服务器，浏览器打开即用。本地存储，持续扩展。
 
-## 🛠 工具列表
+🔗 在线访问：[zhangwei6321-spec.github.io/book-reader](https://zhangwei6321-spec.github.io/book-reader/)
 
-### ✅ [习惯打卡](https://zhangwei6321-spec.github.io/book-reader/apps/habit-tracker/)
+---
 
-习惯养成追踪工具，支持每日打卡、自定义完成档次、每周休息日、日历热力图、笔记和 PDF 导出。
+## ⚡ 效率工具
 
-- 📌 今日打卡 — 一键标记所有习惯
-- 📋 习惯管理 — 每个习惯独立配置完成档次（如：未完成 / 部分完成 / 已完成 / 超额完成）
-- 📊 统计 — 月度日历热力图，点击日期查看当天详情
-- 📝 笔记 — 按习惯和日期筛选
-- 🔔 每日提醒 — 桌面通知
-- 📤 导出 — 打卡记录 + 笔记导出为 PDF
+| 项目 | 描述 | 在线链接 |
+|------|------|----------|
+| ✅ 习惯打卡 | 习惯养成追踪，每日打卡，自定义完成档次，每周休息日，日历热力图，笔记与 PDF 导出 | [打开](https://zhangwei6321-spec.github.io/book-reader/apps/habit-tracker/) |
+| ⏱️ 专注计时器 | 任务计时，自定义总时长与每日目标，进度可视化，快捷笔记，每日提醒，PDF 报告导出 | [打开](https://zhangwei6321-spec.github.io/book-reader/apps/timer-app/) |
 
-### ⏱️ [专注计时器](https://zhangwei6321-spec.github.io/book-reader/apps/timer-app/)
+## 📚 学习与阅读
 
-任务计时工具，自定义总时长与每日目标，进度可视化。
+| 项目 | 描述 | 在线链接 |
+|------|------|----------|
+| 📝 公基刷题库 | 2026 事业单位 / 三支一扶公基刷题，分类练习，错题回顾 | [打开](https://zhangwei6321-spec.github.io/book-reader/%E9%A2%98%E5%BA%93/) |
+| 📖 仿真书架 | 书本翻页阅读器，仿真翻页效果，沉浸式 TXT 阅读 | [打开](https://zhangwei6321-spec.github.io/book-reader/txt%E4%BB%BF%E7%9C%9F%E9%98%85%E8%AF%BB/) |
 
-- ⏱ 计时器 — 选择任务后开始/暂停计时，今日进度条
-- 📋 任务管理 — 总时长、每日时长配置
-- 📝 快捷笔记 — 计时过程中随时记录
-- 🔔 每日提醒 — 桌面通知
-- 📤 PDF 导出 — 计时记录 + 笔记
+## 🎬 媒体工具
 
-## 🔗 在线访问
+| 项目 | 描述 | 在线链接 |
+|------|------|----------|
+| 🎥 短视频去水印 | 抖音 / 快手短视频去水印解析下载 | [打开](https://zhangwei6321-spec.github.io/book-reader/video-parser/public/) |
+| 📹 媒体解析器 | 多平台媒体内容解析，支持抖音、快手、视频、图片 | [打开](https://zhangwei6321-spec.github.io/book-reader/media-parser/) |
+| 📸 证件照处理 | 纯浏览器端 AI 抠图换底，多种尺寸规格 | [打开](https://zhangwei6321-spec.github.io/book-reader/%E8%AF%81%E4%BB%B6%E7%85%A7/) |
 
-| 工具 | 链接 |
-|------|------|
-| 主页 | [book-reader](https://zhangwei6321-spec.github.io/book-reader/) |
-| 习惯打卡 | [habit-tracker](https://zhangwei6321-spec.github.io/book-reader/apps/habit-tracker/) |
-| 专注计时器 | [timer-app](https://zhangwei6321-spec.github.io/book-reader/apps/timer-app/) |
+## 🎮 休闲游戏
 
-## 📦 技术栈
+| 项目 | 描述 | 在线链接 |
+|------|------|----------|
+| 🏰 妖怪迷城 | Yokai Labyrinth 地牢逃脱，探索迷宫，挑战妖怪 | [打开](https://zhangwei6321-spec.github.io/book-reader/castle-escape/) |
+| ♟️ 棋类游戏中心 | 多种棋类游戏合集，在线对弈 | [打开](https://zhangwei6321-spec.github.io/book-reader/games/) |
 
-- 纯 HTML/CSS/JS，无框架
-- localStorage 本地存储
-- jsPDF 导出 PDF
+---
+
+## 🛠 技术栈
+
+- 纯 HTML / CSS / JavaScript，无框架依赖
+- localStorage 本地数据存储
+- jsPDF 客户端 PDF 生成
 - Notification API 桌面提醒
-- GitHub Pages 部署
+- GitHub Pages 静态部署
+
+## 📂 项目结构
+
+```
+book-reader/
+├── index.html              ← 总主页
+├── apps/
+│   ├── habit-tracker/      ← 习惯打卡
+│   └── timer-app/          ← 专注计时器
+├── 题库/                   ← 公基刷题库
+├── txt仿真阅读/             ← 仿真书架阅读器
+├── video-parser/           ← 短视频去水印
+├── media-parser/           ← 媒体解析器
+├── 证件照/                  ← 证件照处理
+├── castle-escape/          ← 妖怪迷城
+└── games/                  ← 棋类游戏中心
+```
