@@ -3,195 +3,281 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>📦 项目工具箱</title>
+<title>项目工具箱</title>
 <style>
   :root {
-    --bg: #0b0e14; --surface: #141820; --surface2: #1c202c; --border: #282d3a;
-    --text: #e1e6f0; --text2: #7b8196;
-    --accent: #5b9cf5; --accent2: #a78bfa;
-    --green: #34d399; --orange: #fb923c; --red: #f87171; --yellow: #fbbf24;
-    --radius: 14px;
+    --bg: #080b11; --surface: #10141d; --surface2: #181c28; --border: #232836;
+    --text: #e4e8f1; --text2: #6e7490; --text3: #4a4f66;
+    --blue: #5b9cf5; --purple: #a78bfa; --green: #34d399;
+    --orange: #fb923c; --red: #f87171; --yellow: #fbbf24; --pink: #f472b6;
+    --radius: 16px;
   }
   * { margin:0; padding:0; box-sizing:border-box; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    background: var(--bg); color: var(--text); min-height: 100vh; padding: 40px 24px 60px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+    background: var(--bg); color: var(--text); min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
   }
-  .container { max-width: 960px; margin: 0 auto; }
-  .header { text-align: center; margin-bottom: 44px; }
-  .header h1 {
-    font-size: 32px; font-weight: 700; letter-spacing: -0.5px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2), var(--green));
+
+  /* ── Hero ── */
+  .hero {
+    text-align: center; padding: 64px 24px 48px;
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(91,156,245,0.06) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 50% at 30% 80%, rgba(167,139,250,0.04) 0%, transparent 60%);
+    border-bottom: 1px solid var(--border);
+  }
+  .hero h1 {
+    font-size: 40px; font-weight: 800; letter-spacing: -1px; margin-bottom: 12px;
+    background: linear-gradient(135deg, #e4e8f1 0%, #a0aec0 40%, var(--blue) 70%, var(--purple) 100%);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
   }
-  .header p { color: var(--text2); font-size: 14px; margin-top: 8px; }
-  .header .repo-link { margin-top: 10px; }
-  .header .repo-link a { color: var(--accent); font-size: 12px; text-decoration: none; }
-  .header .repo-link a:hover { text-decoration: underline; }
-
-  /* Category */
-  .section { margin-bottom: 36px; }
-  .section-title {
-    font-size: 14px; font-weight: 600; color: var(--text2); margin-bottom: 14px;
-    display: flex; align-items: center; gap: 8px;
+  .hero p { color: var(--text2); font-size: 15px; max-width: 480px; margin: 0 auto 20px; line-height: 1.6; }
+  .hero .meta { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
+  .hero .meta a, .hero .meta span {
+    color: var(--text3); font-size: 12px; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 14px; border-radius: 20px; background: var(--surface2); border: 1px solid var(--border);
+    transition: all 0.2s;
   }
-  .section-title::after {
-    content: ''; flex:1; height: 1px; background: var(--border);
-  }
+  .hero .meta a:hover { color: var(--blue); border-color: var(--blue); }
 
-  /* Cards grid */
-  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+  /* ── Container ── */
+  .main { max-width: 1000px; margin: 0 auto; padding: 40px 24px 80px; }
 
+  /* ── Category ── */
+  .category { margin-bottom: 48px; }
+  .cat-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+  .cat-header .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .cat-header h2 { font-size: 16px; font-weight: 700; color: var(--text); letter-spacing: 0; }
+  .cat-header .count { font-size: 11px; color: var(--text3); font-weight: 500; }
+
+  /* ── Cards Grid ── */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+
+  /* ── Card ── */
   .card {
     background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 22px 20px; text-decoration: none; color: var(--text);
-    transition: all 0.2s; display: flex; gap: 14px; align-items: flex-start;
-    position: relative; overflow: hidden;
+    padding: 0; text-decoration: none; color: var(--text); display: flex; flex-direction: column;
+    transition: all 0.25s; overflow: hidden; position: relative;
   }
-  .card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 4px 20px rgba(91,156,245,0.08); }
-  .card .emoji { font-size: 32px; flex-shrink: 0; line-height: 1; }
-  .card .info { flex: 1; min-width: 0; }
-  .card .info h3 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
-  .card .info p { font-size: 12px; color: var(--text2); line-height: 1.55; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  .card .info .tags { display: flex; gap: 5px; margin-top: 10px; flex-wrap: wrap; }
+  .card:hover { border-color: rgba(91,156,245,0.35); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+  .card-body { padding: 20px 22px 18px; flex: 1; }
+  .card .icon-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .card .icon-pic {
+    width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center;
+    justify-content: center; font-size: 22px; flex-shrink: 0;
+  }
+  .card h3 { font-size: 15px; font-weight: 700; letter-spacing: -0.2px; }
+  .card .desc { font-size: 12px; color: var(--text2); line-height: 1.6; margin-bottom: 14px; }
+  .card .tags { display: flex; gap: 6px; flex-wrap: wrap; }
   .tag {
-    padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 600;
-    background: rgba(91,156,245,0.08); color: var(--accent); white-space: nowrap;
+    padding: 3px 10px; border-radius: 6px; font-size: 10px; font-weight: 600;
+    letter-spacing: 0.3px;
   }
-  .tag.purple { background: rgba(167,139,250,0.08); color: var(--accent2); }
-  .tag.green  { background: rgba(52,211,153,0.08); color: var(--green); }
-  .tag.orange { background: rgba(251,146,60,0.08); color: var(--orange); }
-  .tag.yellow { background: rgba(251,191,36,0.08); color: var(--yellow); }
+  .card .link-row {
+    border-top: 1px solid var(--border); padding: 10px 22px;
+    display: flex; gap: 14px; font-size: 10px;
+  }
+  .card .link-row a {
+    color: var(--text3); text-decoration: none; display: inline-flex; align-items: center; gap: 4px;
+    transition: color 0.15s;
+  }
+  .card .link-row a:hover { color: var(--blue); }
 
-  .proj-url { margin-top: 8px; }
-  .proj-url a { font-size: 10px; color: var(--text2); text-decoration: none; word-break: break-all; opacity: 0.7; transition: opacity 0.15s; }
-  .proj-url a:hover { opacity: 1; color: var(--accent); }
+  /* ── Category Colors ── */
+  .cat-eff  .dot { background: var(--blue); }
+  .cat-eff  .icon-pic { background: rgba(91,156,245,0.1); }
+  .cat-eff  .tag { background: rgba(91,156,245,0.08); color: var(--blue); }
 
-  .footer { text-align: center; margin-top: 50px; font-size: 11px; color: var(--text2); }
-  .footer a { color: var(--accent); text-decoration: none; }
-  .footer a:hover { text-decoration: underline; }
+  .cat-learn .dot { background: var(--green); }
+  .cat-learn .icon-pic { background: rgba(52,211,153,0.1); }
+  .cat-learn .tag { background: rgba(52,211,153,0.08); color: var(--green); }
+
+  .cat-media .dot { background: var(--purple); }
+  .cat-media .icon-pic { background: rgba(167,139,250,0.1); }
+  .cat-media .tag { background: rgba(167,139,250,0.08); color: var(--purple); }
+
+  .cat-game .dot { background: var(--orange); }
+  .cat-game .icon-pic { background: rgba(251,146,60,0.1); }
+  .cat-game .tag { background: rgba(251,146,60,0.08); color: var(--orange); }
+
+  /* ── Footer ── */
+  .footer { text-align: center; padding: 32px 24px; border-top: 1px solid var(--border); }
+  .footer p { font-size: 11px; color: var(--text3); }
+  .footer a { color: var(--text2); text-decoration: none; }
+  .footer a:hover { color: var(--blue); }
+
+  /* ── Responsive ── */
+  @media (max-width: 680px) {
+    .hero h1 { font-size: 28px; }
+    .hero { padding: 40px 16px 32px; }
+    .main { padding: 24px 14px 60px; }
+    .grid { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body>
-<div class="container">
-  <div class="header">
-    <h1>📦 项目工具箱</h1>
-    <p>纯静态 · 本地存储 · 浏览器即用 · 持续扩展</p>
-    <div class="repo-link"><a href="https://github.com/zhangwei6321-spec/book-reader">📂 github.com/zhangwei6321-spec/book-reader</a></div>
+
+<!-- ════ Hero ════ -->
+<header class="hero">
+  <h1>项目工具箱</h1>
+  <p>纯静态项目合集，浏览器打开即用，本地存储，持续扩展</p>
+  <div class="meta">
+    <a href="https://github.com/zhangwei6321-spec/book-reader" target="_blank">📂 GitHub 仓库</a>
+    <a href="https://zhangwei6321-spec.github.io/book-reader/" target="_blank">🌐 在线访问</a>
+    <span>📦 9 个项目</span>
   </div>
+</header>
+
+<!-- ════ Main ════ -->
+<div class="main">
 
   <!-- 效率工具 -->
-  <div class="section">
-    <div class="section-title">⚡ 效率工具</div>
-    <div class="cards">
+  <section class="category cat-eff">
+    <div class="cat-header"><span class="dot"></span><h2>效率工具</h2><span class="count">2 项</span></div>
+    <div class="grid">
+
       <a href="apps/habit-tracker/" class="card">
-        <div class="emoji">✅</div>
-        <div class="info">
-          <h3>习惯打卡</h3>
-          <div class="proj-url"><a href="https://zhangwei6321-spec.github.io/book-reader/apps/habit-tracker/" onclick="event.stopPropagation()" title="在线访问链接">🔗 https://zhangwei6321-spec.github.io/book-reader/apps/habit-tracker/</a></div>
-          <p>习惯养成追踪，每日打卡，自定义完成档次，每周休息日，日历热力图，笔记与 PDF 导出。</p>
-          <div class="tags"><span class="tag">习惯追踪</span><span class="tag purple">日历视图</span><span class="tag green">PDF 导出</span></div>
+        <div class="card-body">
+          <div class="icon-row"><div class="icon-pic">✅</div><h3>习惯打卡</h3></div>
+          <div class="desc">每日打卡追踪，自定义完成档次，每周休息日，日历热力图，笔记与 PDF 导出</div>
+          <div class="tags"><span class="tag">习惯养成</span><span class="tag">日历视图</span><span class="tag">PDF 导出</span></div>
+        </div>
+        <div class="link-row">
+          <a href="https://zhangwei6321-spec.github.io/book-reader/apps/habit-tracker/" target="_blank">🌐 在线访问</a>
+          <a href="https://github.com/zhangwei6321-spec/book-reader/tree/master/apps/habit-tracker" target="_blank">📂 源码</a>
         </div>
       </a>
+
       <a href="apps/timer-app/" class="card">
-        <div class="emoji">⏱️</div>
-        <div class="info">
-          <h3>专注计时器</h3>
-          <div class="proj-url"><a href="https://zhangwei6321-spec.github.io/book-reader/apps/timer-app/" onclick="event.stopPropagation()" title="在线访问链接">🔗 https://zhangwei6321-spec.github.io/book-reader/apps/timer-app/</a></div>
-          <p>任务计时，自定义总时长与每日目标，进度可视化，快捷笔记，每日提醒，PDF 报告导出。</p>
-          <div class="tags"><span class="tag">任务计时</span><span class="tag purple">进度追踪</span><span class="tag green">PDF 导出</span></div>
+        <div class="card-body">
+          <div class="icon-row"><div class="icon-pic">⏱️</div><h3>专注计时器</h3></div>
+          <div class="desc">任务计时，自定义总时长与每日目标，进度可视化，快捷笔记，PDF 报告导出</div>
+          <div class="tags"><span class="tag">任务计时</span><span class="tag">进度追踪</span><span class="tag">PDF 导出</span></div>
+        </div>
+        <div class="link-row">
+          <a href="https://zhangwei6321-spec.github.io/book-reader/apps/timer-app/" target="_blank">🌐 在线访问</a>
+          <a href="https://github.com/zhangwei6321-spec/book-reader/tree/master/apps/timer-app" target="_blank">📂 源码</a>
         </div>
       </a>
+
     </div>
-  </div>
+  </section>
 
   <!-- 学习与阅读 -->
-  <div class="section">
-    <div class="section-title">📚 学习与阅读</div>
-    <div class="cards">
+  <section class="category cat-learn">
+    <div class="cat-header"><span class="dot"></span><h2>学习与阅读</h2><span class="count">2 项</span></div>
+    <div class="grid">
+
       <a href="题库/" class="card">
-        <div class="emoji">📝</div>
-        <div class="info">
-          <h3>公基刷题库</h3>
-          <div class="proj-url"><a href="https://zhangwei6321-spec.github.io/book-reader/%E9%A2%98%E5%BA%93/" onclick="event.stopPropagation()" title="在线访问链接">🔗 https://zhangwei6321-spec.github.io/book-reader/%E9%A2%98%E5%BA%93/</a></div>
-          <p>2026 事业单位 / 三支一扶公基刷题，分类练习，错题回顾，进度追踪。</p>
-          <div class="tags"><span class="tag orange">刷题</span><span class="tag">事业单位</span><span class="tag purple">三支一扶</span></div>
+        <div class="card-body">
+          <div class="icon-row"><div class="icon-pic">📝</div><h3>公基刷题库</h3></div>
+          <div class="desc">2026 事业单位 / 三支一扶公基刷题，分类练习，错题回顾，进度追踪</div>
+          <div class="tags"><span class="tag">事业单位</span><span class="tag">三支一扶</span><span class="tag">刷题</span></div>
+        </div>
+        <div class="link-row">
+          <a href="https://zhangwei6321-spec.github.io/book-reader/%E9%A2%98%E5%BA%93/" target="_blank">🌐 在线访问</a>
+          <a href="https://github.com/zhangwei6321-spec/book-reader/tree/master/%E9%A2%98%E5%BA%93" target="_blank">📂 源码</a>
         </div>
       </a>
+
       <a href="txt仿真阅读/" class="card">
-        <div class="emoji">📖</div>
-        <div class="info">
-          <h3>仿真书架</h3>
-          <div class="proj-url"><a href="https://zhangwei6321-spec.github.io/book-reader/txt%E4%BB%BF%E7%9C%9F%E9%98%85%E8%AF%BB/" onclick="event.stopPropagation()" title="在线访问链接">🔗 https://zhangwei6321-spec.github.io/book-reader/txt%E4%BB%BF%E7%9C%9F%E9%98%85%E8%AF%BB/</a></div>
-          <p>书本翻页阅读器，仿真翻页效果，支持 TXT 小说阅读，沉浸式体验。</p>
-          <div class="tags"><span class="tag green">阅读器</span><span class="tag">翻页特效</span></div>
+        <div class="card-body">
+          <div class="icon-row"><div class="icon-pic">📖</div><h3>仿真书架</h3></div>
+          <div class="desc">书本翻页阅读器，仿真翻页效果，沉浸式 TXT 阅读体验</div>
+          <div class="tags"><span class="tag">阅读器</span><span class="tag">翻页特效</span></div>
+        </div>
+        <div class="link-row">
+          <a href="https://zhangwei6321-spec.github.io/book-reader/txt%E4%BB%BF%E7%9C%9F%E9%98%85%E8%AF%BB/" target="_blank">🌐 在线访问</a>
+          <a href="https://github.com/zhangwei6321-spec/book-reader/tree/master/txt%E4%BB%BF%E7%9C%9F%E9%98%85%E8%AF%BB" target="_blank">📂 源码</a>
         </div>
       </a>
+
     </div>
-  </div>
+  </section>
 
   <!-- 媒体工具 -->
-  <div class="section">
-    <div class="section-title">🎬 媒体工具</div>
-    <div class="cards">
+  <section class="category cat-media">
+    <div class="cat-header"><span class="dot"></span><h2>媒体工具</h2><span class="count">3 项</span></div>
+    <div class="grid">
+
       <a href="video-parser/public/" class="card">
-        <div class="emoji">🎥</div>
-        <div class="info">
-          <h3>短视频去水印</h3>
-          <div class="proj-url"><a href="https://zhangwei6321-spec.github.io/book-reader/video-parser/public/" onclick="event.stopPropagation()" title="在线访问链接">🔗 https://zhangwei6321-spec.github.io/book-reader/video-parser/public/</a></div>
-          <p>抖音 / 快手短视频去水印解析下载，粘贴链接即可获取无水印视频。</p>
-          <div class="tags"><span class="tag orange">抖音</span><span class="tag yellow">快手</span><span class="tag green">下载</span></div>
+        <div class="card-body">
+          <div class="icon-row"><div class="icon-pic">🎥</div><h3>短视频去水印</h3></div>
+          <div class="desc">抖音 / 快手短视频去水印解析下载，粘贴链接即可获取无水印视频</div>
+          <div class="tags"><span class="tag">抖音</span><span class="tag">快手</span><span class="tag">下载</span></div>
+        </div>
+        <div class="link-row">
+          <a href="https://zhangwei6321-spec.github.io/book-reader/video-parser/public/" target="_blank">🌐 在线访问</a>
+          <a href="https://github.com/zhangwei6321-spec/book-reader/tree/master/video-parser/public" target="_blank">📂 源码</a>
         </div>
       </a>
+
       <a href="media-parser/" class="card">
-        <div class="emoji">📹</div>
-        <div class="info">
-          <h3>媒体解析器</h3>
-          <div class="proj-url"><a href="https://zhangwei6321-spec.github.io/book-reader/media-parser/" onclick="event.stopPropagation()" title="在线访问链接">🔗 https://zhangwei6321-spec.github.io/book-reader/media-parser/</a></div>
-          <p>多平台媒体内容解析，支持抖音、快手、视频、图片等多种格式。</p>
-          <div class="tags"><span class="tag purple">多平台</span><span class="tag">解析</span></div>
+        <div class="card-body">
+          <div class="icon-row"><div class="icon-pic">📹</div><h3>媒体解析器</h3></div>
+          <div class="desc">多平台媒体内容解析，支持抖音、快手、视频、图片等多种格式</div>
+          <div class="tags"><span class="tag">多平台</span><span class="tag">解析</span></div>
+        </div>
+        <div class="link-row">
+          <a href="https://zhangwei6321-spec.github.io/book-reader/media-parser/" target="_blank">🌐 在线访问</a>
+          <a href="https://github.com/zhangwei6321-spec/book-reader/tree/master/media-parser" target="_blank">📂 源码</a>
         </div>
       </a>
+
       <a href="证件照/" class="card">
-        <div class="emoji">📸</div>
-        <div class="info">
-          <h3>证件照处理</h3>
-          <div class="proj-url"><a href="https://zhangwei6321-spec.github.io/book-reader/%E8%AF%81%E4%BB%B6%E7%85%A7/" onclick="event.stopPropagation()" title="在线访问链接">🔗 https://zhangwei6321-spec.github.io/book-reader/%E8%AF%81%E4%BB%B6%E7%85%A7/</a></div>
-          <p>纯浏览器端 AI 抠图换底，多种尺寸规格，一键生成证件照。</p>
-          <div class="tags"><span class="tag green">AI 抠图</span><span class="tag">证件照</span><span class="tag purple">换底色</span></div>
+        <div class="card-body">
+          <div class="icon-row"><div class="icon-pic">📸</div><h3>证件照处理</h3></div>
+          <div class="desc">纯浏览器端 AI 抠图换底，多种尺寸规格，一键生成证件照</div>
+          <div class="tags"><span class="tag">AI 抠图</span><span class="tag">证件照</span><span class="tag">换底色</span></div>
+        </div>
+        <div class="link-row">
+          <a href="https://zhangwei6321-spec.github.io/book-reader/%E8%AF%81%E4%BB%B6%E7%85%A7/" target="_blank">🌐 在线访问</a>
+          <a href="https://github.com/zhangwei6321-spec/book-reader/tree/master/%E8%AF%81%E4%BB%B6%E7%85%A7" target="_blank">📂 源码</a>
         </div>
       </a>
-    </div>
-  </div>
 
-  <!-- 游戏 -->
-  <div class="section">
-    <div class="section-title">🎮 休闲游戏</div>
-    <div class="cards">
+    </div>
+  </section>
+
+  <!-- 休闲游戏 -->
+  <section class="category cat-game">
+    <div class="cat-header"><span class="dot"></span><h2>休闲游戏</h2><span class="count">2 项</span></div>
+    <div class="grid">
+
       <a href="castle-escape/" class="card">
-        <div class="emoji">🏰</div>
-        <div class="info">
-          <h3>妖怪迷城</h3>
-          <div class="proj-url"><a href="https://zhangwei6321-spec.github.io/book-reader/castle-escape/" onclick="event.stopPropagation()" title="在线访问链接">🔗 https://zhangwei6321-spec.github.io/book-reader/castle-escape/</a></div>
-          <p>Yokai Labyrinth 地牢逃脱游戏，探索迷宫，收集道具，挑战妖怪。</p>
-          <div class="tags"><span class="tag orange">迷宫</span><span class="tag purple">RPG</span><span class="tag">冒险</span></div>
+        <div class="card-body">
+          <div class="icon-row"><div class="icon-pic">🏰</div><h3>妖怪迷城</h3></div>
+          <div class="desc">Yokai Labyrinth 地牢逃脱游戏，探索迷宫，收集道具，挑战妖怪</div>
+          <div class="tags"><span class="tag">迷宫</span><span class="tag">RPG</span><span class="tag">冒险</span></div>
+        </div>
+        <div class="link-row">
+          <a href="https://zhangwei6321-spec.github.io/book-reader/castle-escape/" target="_blank">🌐 在线访问</a>
+          <a href="https://github.com/zhangwei6321-spec/book-reader/tree/master/castle-escape" target="_blank">📂 源码</a>
         </div>
       </a>
-      <a href="games/" class="card">
-        <div class="emoji">♟️</div>
-        <div class="info">
-          <h3>棋类游戏中心</h3>
-          <div class="proj-url"><a href="https://zhangwei6321-spec.github.io/book-reader/games/" onclick="event.stopPropagation()" title="在线访问链接">🔗 https://zhangwei6321-spec.github.io/book-reader/games/</a></div>
-          <p>多种棋类游戏合集，在线对弈，经典棋类一网打尽。</p>
-          <div class="tags"><span class="tag green">棋类</span><span class="tag">合集</span></div>
-        </div>
-      </a>
-    </div>
-  </div>
 
-  <div class="footer">
-    数据仅存储在浏览器中 · <a href="https://github.com/zhangwei6321-spec/book-reader">GitHub</a> · 纯静态页面，持续扩展中
-  </div>
+      <a href="games/" class="card">
+        <div class="card-body">
+          <div class="icon-row"><div class="icon-pic">♟️</div><h3>棋类游戏中心</h3></div>
+          <div class="desc">多种棋类游戏合集，在线对弈，经典棋类一网打尽</div>
+          <div class="tags"><span class="tag">棋类</span><span class="tag">合集</span></div>
+        </div>
+        <div class="link-row">
+          <a href="https://zhangwei6321-spec.github.io/book-reader/games/" target="_blank">🌐 在线访问</a>
+          <a href="https://github.com/zhangwei6321-spec/book-reader/tree/master/games" target="_blank">📂 源码</a>
+        </div>
+      </a>
+
+    </div>
+  </section>
+
 </div>
+
+<!-- ════ Footer ════ -->
+<footer class="footer">
+  <p>数据仅存储在浏览器中 · <a href="https://github.com/zhangwei6321-spec/book-reader">GitHub</a> · 纯静态 · 持续扩展</p>
+</footer>
+
 </body>
 </html>
