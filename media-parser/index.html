@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>媒体解析器 - 抖音/快手/视频/图片</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
+</head>
+<body>
+<style>
+.prj-bar{position:fixed;top:0;left:0;right:0;z-index:9999;background:#141820;border-bottom:1px solid #282d3a;padding:6px 16px;display:flex;align-items:center;gap:16px;font-size:11px;font-family:-apple-system,BlinkMacSystemFont,sans-serif;flex-wrap:wrap}
+.prj-bar a{color:#7b8196;text-decoration:none;display:inline-flex;align-items:center;gap:4px}
+.prj-bar a:hover{color:#5b9cf5}
+.prj-bar .sep{color:#282d3a}
+.prj-bar .title{color:#e1e6f0;font-weight:600;margin-right:8px}
+.prj-bar+*{margin-top:34px!important}
+body{padding-top:34px}
+</style>
+<div class="prj-bar">
+<span class="title">📦 媒体解析器</span>
+<span class="sep">|</span>
+<a href="https://zhangwei6321-spec.github.io/book-reader/media-parser/" target="_blank">🌐 在线访问</a>
+<a href="https://github.com/zhangwei6321-spec/book-reader/tree/master/media-parser" target="_blank">📂 GitHub 源码</a>
+<a href="https://zhangwei6321-spec.github.io/book-reader/" style="margin-left:auto">🏠 项目工具箱</a>
+</div>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <span class="logo-icon">🎬</span>
+        <h1>媒体解析器</h1>
+      </div>
+      <p class="subtitle">支持抖音 · 快手 · 视频 · 图片 — 在线预览 & 一键下载</p>
+    </header>
+
+    <!-- Input Section -->
+    <section class="input-section">
+      <div class="input-wrapper">
+        <div class="platform-badges" id="platformBadges">
+          <span class="badge" data-platform="douyin">🎵 抖音</span>
+          <span class="badge" data-platform="kuaishou">📱 快手</span>
+          <span class="badge" data-platform="video">🎥 视频</span>
+          <span class="badge" data-platform="image">🖼️ 图片</span>
+        </div>
+        <div class="input-row">
+          <input
+            type="text"
+            id="urlInput"
+            placeholder="粘贴抖音/快手分享文案（自动提取链接），或视频/图片直链..."
+            autocomplete="off"
+            autofocus
+          >
+          <button id="parseBtn" class="btn-primary">
+            <span class="btn-icon">🔍</span>
+            <span>解析</span>
+          </button>
+        </div>
+        <div class="input-actions">
+          <button id="pasteBtn" class="btn-ghost" title="粘贴剪贴板内容">📋 粘贴</button>
+          <button id="clearBtn" class="btn-ghost" title="清空">🗑️ 清空</button>
+          <span class="divider">|</span>
+          <button id="batchBtn" class="btn-ghost" title="批量解析（每行一个链接）">📑 批量</button>
+        </div>
+        <div id="batchArea" class="batch-area hidden">
+          <textarea id="batchInput" placeholder="每行粘贴一个链接，支持抖音/快手/视频/图片混合..."></textarea>
+          <button id="batchParseBtn" class="btn-secondary">批量解析全部</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Status -->
+    <div id="statusBar" class="status-bar hidden"></div>
+
+    <!-- Results -->
+    <section class="results-section" id="resultsSection">
+      <div class="results-header">
+        <h2>解析结果</h2>
+        <span id="resultCount" class="result-count"></span>
+      </div>
+      <div id="resultsGrid" class="results-grid"></div>
+    </section>
+
+    <!-- Empty State -->
+    <div id="emptyState" class="empty-state">
+      <div class="empty-icon">🔗</div>
+      <h3>粘贴链接开始解析</h3>
+      <p>支持抖音、快手、视频直链、图片链接</p>
+      <div class="demo-links">
+        <span class="demo-link" data-url="https://v.douyin.com/example/">抖音示例</span>
+        <span class="demo-link" data-url="https://www.kuaishou.com/short-video/example">快手示例</span>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p id="footerHint">仅用于个人学习与研究，请遵守平台服务条款</p>
+    </footer>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Templates -->
+  <template id="cardTemplate">
+    <div class="card">
+      <div class="card-platform"></div>
+      <div class="card-preview"></div>
+      <div class="card-info">
+        <div class="card-title"></div>
+        <div class="card-meta"></div>
+      </div>
+      <div class="card-actions">
+        <button class="btn-download">
+          <span>⬇️</span> 下载
+        </button>
+        <button class="btn-copy" title="复制链接">
+          <span>📋</span>
+        </button>
+      </div>
+    </div>
+  </template>
+
+  <script src="js/parser.js"></script>
+  <script src="js/downloader.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
