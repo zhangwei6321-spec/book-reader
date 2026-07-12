@@ -18,8 +18,6 @@
     background: var(--bg); color: var(--text); min-height: 100vh;
     -webkit-font-smoothing: antialiased;
   }
-
-  /* ── Hero ── */
   .hero {
     text-align: center; padding: 64px 24px 48px;
     background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(91,156,245,0.06) 0%, transparent 60%),
@@ -40,21 +38,13 @@
     transition: all 0.2s;
   }
   .hero .meta a:hover { color: var(--blue); border-color: var(--blue); }
-
-  /* ── Container ── */
   .main { max-width: 1000px; margin: 0 auto; padding: 40px 24px 80px; }
-
-  /* ── Category ── */
   .category { margin-bottom: 48px; }
   .cat-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
   .cat-header .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
   .cat-header h2 { font-size: 16px; font-weight: 700; color: var(--text); letter-spacing: 0; }
   .cat-header .count { font-size: 11px; color: var(--text3); font-weight: 500; }
-
-  /* ── Cards Grid ── */
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
-
-  /* ── Card ── */
   .card {
     background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
     padding: 0; text-decoration: none; color: var(--text); display: flex; flex-direction: column;
@@ -70,55 +60,10 @@
   .card h3 { font-size: 15px; font-weight: 700; letter-spacing: -0.2px; }
   .card .desc { font-size: 12px; color: var(--text2); line-height: 1.6; margin-bottom: 14px; }
   .card .tags { display: flex; gap: 6px; flex-wrap: wrap; }
-  .tag {
-    padding: 3px 10px; border-radius: 6px; font-size: 10px; font-weight: 600;
-    letter-spacing: 0.3px;
-  }
-  .card .link-row {
-    border-top: 1px solid var(--border); padding: 10px 22px;
-    display: flex; gap: 14px; font-size: 10px;
-  }
-  .card .link-row a {
-    color: var(--text3); text-decoration: none; display: inline-flex; align-items: center; gap: 4px;
-    transition: color 0.15s;
-  }
-  .card .link-row a:hover { color: var(--blue); }
-
-  /* ── Category Colors ── */
-  .cat-eff  .dot { background: var(--blue); }
-  .cat-eff  .icon-pic { background: rgba(91,156,245,0.1); }
-  .cat-eff  .tag { background: rgba(91,156,245,0.08); color: var(--blue); }
-
-  .cat-learn .dot { background: var(--green); }
-  .cat-learn .icon-pic { background: rgba(52,211,153,0.1); }
-  .cat-learn .tag { background: rgba(52,211,153,0.08); color: var(--green); }
-
-  .cat-media .dot { background: var(--purple); }
-  .cat-media .icon-pic { background: rgba(167,139,250,0.1); }
-  .cat-media .tag { background: rgba(167,139,250,0.08); color: var(--purple); }
-
-  .cat-game .dot { background: var(--orange); }
-  .cat-game .icon-pic { background: rgba(251,146,60,0.1); }
-  .cat-game .tag { background: rgba(251,146,60,0.08); color: var(--orange); }
-
-  /* ── Footer ── */
-  .footer { text-align: center; padding: 32px 24px; border-top: 1px solid var(--border); }
-  .footer p { font-size: 11px; color: var(--text3); }
-  .footer a { color: var(--text2); text-decoration: none; }
-  .footer a:hover { color: var(--blue); }
-
-  /* ── Responsive ── */
-  @media (max-width: 680px) {
-    .hero h1 { font-size: 28px; }
-    .hero { padding: 40px 16px 32px; }
-    .main { padding: 24px 14px 60px; }
-    .grid { grid-template-columns: 1fr; }
-  }
+  .tag { padding: 3px 10px; border-radius: 6px; font-size: 10px; font-weight: 600; letter-spacing: 0.3px; }
 </style>
 </head>
 <body>
-
-<!-- ════ Hero ════ -->
 <header class="hero">
   <h1>项目工具箱</h1>
   <p>纯静态项目合集，浏览器打开即用，本地存储，持续扩展</p>
@@ -128,156 +73,89 @@
     <span>📦 9 个项目</span>
   </div>
 </header>
-
-<!-- ════ Main ════ -->
 <div class="main">
 
-  <!-- 效率工具 -->
   <section class="category cat-eff">
     <div class="cat-header"><span class="dot"></span><h2>效率工具</h2><span class="count">2 项</span></div>
     <div class="grid">
-
       <a href="apps/habit-tracker/" class="card">
         <div class="card-body">
           <div class="icon-row"><div class="icon-pic">✅</div><h3>习惯打卡</h3></div>
           <div class="desc">每日打卡追踪，自定义完成档次，每周休息日，日历热力图，笔记与 PDF 导出</div>
           <div class="tags"><span class="tag">习惯养成</span><span class="tag">日历视图</span><span class="tag">PDF 导出</span></div>
-        </div>
-        <div class="link-row">
-          <a href="https://zhangwei6321-spec.github.io/book-reader/apps/habit-tracker/" target="_blank">🌐 在线访问</a>
-          <a href="https://github.com/zhangwei6321-spec/book-reader/tree/master/apps/habit-tracker" target="_blank">📂 源码</a>
-        </div>
-      </a>
-
+        </div></a>
       <a href="apps/timer-app/" class="card">
         <div class="card-body">
           <div class="icon-row"><div class="icon-pic">⏱️</div><h3>专注计时器</h3></div>
           <div class="desc">任务计时，自定义总时长与每日目标，进度可视化，快捷笔记，PDF 报告导出</div>
           <div class="tags"><span class="tag">任务计时</span><span class="tag">进度追踪</span><span class="tag">PDF 导出</span></div>
-        </div>
-        <div class="link-row">
-          <a href="https://zhangwei6321-spec.github.io/book-reader/apps/timer-app/" target="_blank">🌐 在线访问</a>
-          <a href="https://github.com/zhangwei6321-spec/book-reader/tree/master/apps/timer-app" target="_blank">📂 源码</a>
-        </div>
-      </a>
-
+        </div></a>
     </div>
   </section>
 
-  <!-- 学习与阅读 -->
   <section class="category cat-learn">
     <div class="cat-header"><span class="dot"></span><h2>学习与阅读</h2><span class="count">2 项</span></div>
     <div class="grid">
-
       <a href="题库/" class="card">
         <div class="card-body">
           <div class="icon-row"><div class="icon-pic">📝</div><h3>公基刷题库</h3></div>
           <div class="desc">2026 事业单位 / 三支一扶公基刷题，分类练习，错题回顾，进度追踪</div>
           <div class="tags"><span class="tag">事业单位</span><span class="tag">三支一扶</span><span class="tag">刷题</span></div>
-        </div>
-        <div class="link-row">
-          <a href="https://zhangwei6321-spec.github.io/book-reader/%E9%A2%98%E5%BA%93/" target="_blank">🌐 在线访问</a>
-          <a href="https://github.com/zhangwei6321-spec/book-reader/tree/master/%E9%A2%98%E5%BA%93" target="_blank">📂 源码</a>
-        </div>
-      </a>
-
+        </div></a>
       <a href="txt仿真阅读/" class="card">
         <div class="card-body">
           <div class="icon-row"><div class="icon-pic">📖</div><h3>仿真书架</h3></div>
           <div class="desc">书本翻页阅读器，仿真翻页效果，沉浸式 TXT 阅读体验</div>
           <div class="tags"><span class="tag">阅读器</span><span class="tag">翻页特效</span></div>
-        </div>
-        <div class="link-row">
-          <a href="https://zhangwei6321-spec.github.io/book-reader/txt%E4%BB%BF%E7%9C%9F%E9%98%85%E8%AF%BB/" target="_blank">🌐 在线访问</a>
-          <a href="https://github.com/zhangwei6321-spec/book-reader/tree/master/txt%E4%BB%BF%E7%9C%9F%E9%98%85%E8%AF%BB" target="_blank">📂 源码</a>
-        </div>
-      </a>
-
+        </div></a>
     </div>
   </section>
 
-  <!-- 媒体工具 -->
   <section class="category cat-media">
     <div class="cat-header"><span class="dot"></span><h2>媒体工具</h2><span class="count">3 项</span></div>
     <div class="grid">
-
       <a href="video-parser/public/" class="card">
         <div class="card-body">
           <div class="icon-row"><div class="icon-pic">🎥</div><h3>短视频去水印</h3></div>
           <div class="desc">抖音 / 快手短视频去水印解析下载，粘贴链接即可获取无水印视频</div>
           <div class="tags"><span class="tag">抖音</span><span class="tag">快手</span><span class="tag">下载</span></div>
-        </div>
-        <div class="link-row">
-          <a href="https://zhangwei6321-spec.github.io/book-reader/video-parser/public/" target="_blank">🌐 在线访问</a>
-          <a href="https://github.com/zhangwei6321-spec/book-reader/tree/master/video-parser/public" target="_blank">📂 源码</a>
-        </div>
-      </a>
-
+        </div></a>
       <a href="media-parser/" class="card">
         <div class="card-body">
           <div class="icon-row"><div class="icon-pic">📹</div><h3>媒体解析器</h3></div>
           <div class="desc">多平台媒体内容解析，支持抖音、快手、视频、图片等多种格式</div>
           <div class="tags"><span class="tag">多平台</span><span class="tag">解析</span></div>
-        </div>
-        <div class="link-row">
-          <a href="https://zhangwei6321-spec.github.io/book-reader/media-parser/" target="_blank">🌐 在线访问</a>
-          <a href="https://github.com/zhangwei6321-spec/book-reader/tree/master/media-parser" target="_blank">📂 源码</a>
-        </div>
-      </a>
-
+        </div></a>
       <a href="证件照/" class="card">
         <div class="card-body">
           <div class="icon-row"><div class="icon-pic">📸</div><h3>证件照处理</h3></div>
           <div class="desc">纯浏览器端 AI 抠图换底，多种尺寸规格，一键生成证件照</div>
           <div class="tags"><span class="tag">AI 抠图</span><span class="tag">证件照</span><span class="tag">换底色</span></div>
-        </div>
-        <div class="link-row">
-          <a href="https://zhangwei6321-spec.github.io/book-reader/%E8%AF%81%E4%BB%B6%E7%85%A7/" target="_blank">🌐 在线访问</a>
-          <a href="https://github.com/zhangwei6321-spec/book-reader/tree/master/%E8%AF%81%E4%BB%B6%E7%85%A7" target="_blank">📂 源码</a>
-        </div>
-      </a>
-
+        </div></a>
     </div>
   </section>
 
-  <!-- 休闲游戏 -->
   <section class="category cat-game">
     <div class="cat-header"><span class="dot"></span><h2>休闲游戏</h2><span class="count">2 项</span></div>
     <div class="grid">
-
       <a href="castle-escape/" class="card">
         <div class="card-body">
           <div class="icon-row"><div class="icon-pic">🏰</div><h3>妖怪迷城</h3></div>
           <div class="desc">Yokai Labyrinth 地牢逃脱游戏，探索迷宫，收集道具，挑战妖怪</div>
           <div class="tags"><span class="tag">迷宫</span><span class="tag">RPG</span><span class="tag">冒险</span></div>
-        </div>
-        <div class="link-row">
-          <a href="https://zhangwei6321-spec.github.io/book-reader/castle-escape/" target="_blank">🌐 在线访问</a>
-          <a href="https://github.com/zhangwei6321-spec/book-reader/tree/master/castle-escape" target="_blank">📂 源码</a>
-        </div>
-      </a>
-
+        </div></a>
       <a href="games/" class="card">
         <div class="card-body">
           <div class="icon-row"><div class="icon-pic">♟️</div><h3>棋类游戏中心</h3></div>
           <div class="desc">多种棋类游戏合集，在线对弈，经典棋类一网打尽</div>
           <div class="tags"><span class="tag">棋类</span><span class="tag">合集</span></div>
-        </div>
-        <div class="link-row">
-          <a href="https://zhangwei6321-spec.github.io/book-reader/games/" target="_blank">🌐 在线访问</a>
-          <a href="https://github.com/zhangwei6321-spec/book-reader/tree/master/games" target="_blank">📂 源码</a>
-        </div>
-      </a>
-
+        </div></a>
     </div>
   </section>
 
 </div>
-
-<!-- ════ Footer ════ -->
 <footer class="footer">
   <p>数据仅存储在浏览器中 · <a href="https://github.com/zhangwei6321-spec/book-reader">GitHub</a> · 纯静态 · 持续扩展</p>
 </footer>
-
 </body>
 </html>
