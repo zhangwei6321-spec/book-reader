@@ -24,7 +24,6 @@
 
 | 项目 | 描述 | 在线链接 |
 |------|------|----------|
-| 🎥 短视频去水印 | 抖音 / 快手短视频去水印解析下载 | [打开](https://zhangwei6321-spec.github.io/book-reader/video-parser/public/) |
 | 📹 媒体解析器 | 多平台媒体内容解析，支持抖音、快手、视频、图片 | [打开](https://zhangwei6321-spec.github.io/book-reader/media-parser/) |
 | 📸 证件照处理 | 纯浏览器端 AI 抠图换底，多种尺寸规格 | [打开](https://zhangwei6321-spec.github.io/book-reader/%E8%AF%81%E4%BB%B6%E7%85%A7/) |
 
@@ -55,7 +54,6 @@ book-reader/
 │   └── timer-app/          ← 专注计时器
 ├── 题库/                   ← 公基刷题库
 ├── txt仿真阅读/             ← 仿真书架阅读器
-├── video-parser/           ← 短视频去水印
 ├── media-parser/           ← 媒体解析器
 ├── 证件照/                  ← 证件照处理
 ├── castle-escape/          ← 妖怪迷城
